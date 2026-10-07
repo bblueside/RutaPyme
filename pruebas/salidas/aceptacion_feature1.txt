@@ -95,18 +95,21 @@ API: http://127.0.0.1:8000
         Esperado: 4 puntos y 4 conexiones
         Obtenido: 4 puntos y 4 conexiones
 
-=== API y datos de ejemplo ===
+=== API, visualización y datos de ejemplo ===
 [PASÓ] 29. Endpoint inexistente
         Esperado: 404 ruta_no_encontrada
         Obtenido: 404 ruta_no_encontrada — «No existe el endpoint /api/rutas.»
 [PASÓ] 30. Método no permitido
         Esperado: 405 metodo_no_permitido
         Obtenido: 405 metodo_no_permitido — «PUT no está permitido en /api/puntos. Use: GET, POST.»
-[PASÓ] 31. Cargar la red sintética de ejemplo
+[PASÓ] 31. Imagen de la red dibujada con NetworkX
+        Esperado: 200 image/png con firma PNG
+        Obtenido: 200 image/png con firma PNG=True
+[PASÓ] 32. Cargar la red sintética de ejemplo
         Esperado: 201 con 7 puntos y 10 conexiones
         Obtenido: 201 con 7 puntos y 10 conexiones
-[PASÓ] 32. Vaciar la red
+[PASÓ] 33. Vaciar la red
         Esperado: 200 y luego 0 puntos, 0 conexiones
         Obtenido: 200 y luego 0 puntos, 0 conexiones
 
-Resultado: 32/32 escenarios aprobados.
+Resultado: 33/33 escenarios aprobados.
