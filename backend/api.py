@@ -1,5 +1,7 @@
 """API REST de RutaPyme construida solo con la biblioteca estándar (http.server).
 
+También sirve los archivos de la interfaz web (carpeta frontend/), así que API e interfaz
+viven en el mismo servidor y la interfaz consume la API real.
 Contrato de endpoints: docs/feature-1/especificacion.md, sección 5.
 """
 
@@ -10,9 +12,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+from backend import visualizacion
 from backend.red import TIPOS_PUNTO, ErrorRed, FormatoIncorrecto, RedOperativa
 
 RAIZ = Path(__file__).resolve().parent.parent
+CARPETA_FRONTEND = RAIZ / "frontend"
 ARCHIVO_EJEMPLO = RAIZ / "datos" / "red_ejemplo.json"
 TAMANO_MAXIMO_CUERPO = 10_000  # bytes; una petición de esta API nunca necesita más
 
@@ -26,6 +30,13 @@ ESTADO_HTTP_POR_ERROR = {
     "conexion_duplicada": 409,
 }
 
+ARCHIVOS_ESTATICOS = {
+    "/": ("index.html", "text/html; charset=utf-8"),
+    "/index.html": ("index.html", "text/html; charset=utf-8"),
+    "/estilos.css": ("estilos.css", "text/css; charset=utf-8"),
+    "/app.js": ("app.js", "text/javascript; charset=utf-8"),
+}
+
 # (método, patrón de ruta, nombre del método que la atiende). {id} es un parámetro.
 RUTAS = [
     ("GET", "/api/salud", "salud"),
@@ -37,6 +48,7 @@ RUTAS = [
     ("POST", "/api/conexiones", "crear_conexion"),
     ("GET", "/api/red", "ver_red"),
     ("DELETE", "/api/red", "vaciar_red"),
+    ("GET", "/api/red/imagen", "ver_imagen"),
     ("POST", "/api/red/ejemplo", "cargar_ejemplo"),
 ]
 
@@ -85,6 +97,10 @@ class ManejadorRutaPyme(BaseHTTPRequestHandler):
         ruta = urlsplit(self.path).path
         if ruta != "/":
             ruta = ruta.rstrip("/")
+
+        if metodo == "GET" and ruta in ARCHIVOS_ESTATICOS:
+            self._enviar_estatico(*ARCHIVOS_ESTATICOS[ruta])
+            return
 
         metodos_permitidos = []
         for metodo_ruta, patron, nombre in RUTAS:
@@ -188,6 +204,13 @@ class ManejadorRutaPyme(BaseHTTPRequestHandler):
             "resumen": self.red.representacion()["resumen"],
         })
 
+    def ver_imagen(self):
+        if not visualizacion.DISPONIBLE:
+            self._enviar_error(503, "visualizacion_no_disponible",
+                               "Instale las dependencias con: pip install -r requirements.txt")
+            return
+        self._enviar(200, visualizacion.dibujar_red(self.red), "image/png")
+
     # --- Salida -----------------------------------------------------------
 
     def _enviar(self, estado, cuerpo, tipo_contenido):
@@ -204,6 +227,9 @@ class ManejadorRutaPyme(BaseHTTPRequestHandler):
 
     def _enviar_error(self, estado, codigo, mensaje):
         self._enviar_json(estado, {"error": {"codigo": codigo, "mensaje": mensaje}})
+
+    def _enviar_estatico(self, nombre_archivo, tipo_contenido):
+        self._enviar(200, (CARPETA_FRONTEND / nombre_archivo).read_bytes(), tipo_contenido)
 
     def log_message(self, formato, *argumentos):
         print(f"[API] {self.log_date_time_string()} {formato % argumentos}", flush=True)
