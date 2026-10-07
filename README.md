@@ -1,7 +1,7 @@
 # RutaPyme — Red operativa de entregas
 
 Microproducto para la materia **Matemáticas para la Informática Avanzada** · Equipo 7
-**Integrantes:** [Nombre Miembro 1] · [Nombre Miembro 2] · [Nombre Miembro 3] · [Nombre Miembro 4]
+**Integrantes:** **Emmanuel Cardona**, **Sebastian Ramirez**, **Juliana Velandia**
 
 RutaPyme coordina entregas entre una bodega, barrios y puntos de recogida. Hoy decide "a ojo" y a
 veces envía pedidos por conexiones cerradas. Esta herramienta modela su red como un
