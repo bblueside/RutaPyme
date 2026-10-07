@@ -10,10 +10,12 @@ veces envía pedidos por conexiones cerradas. Esta herramienta modela su red com
 
 | Feature | Estado | Descripción |
 |---------|--------|-------------|
-| 1 · Red operativa inicial | 🚧 En construcción | Registrar y consultar puntos y trayectos |
+| 1 · Red operativa inicial | ✅ Terminada | Registrar y consultar puntos y trayectos |
 | 2 · Cobertura de entregas | ⏳ Pendiente | ¿Qué destinos alcanzo desde una bodega? |
 | 3 · Ruta de menor costo | ⏳ Pendiente | Ruta más barata entre dos puntos |
 | 4 · Operación demostrable | ⏳ Pendiente | Integración, cambio de requisito y demo |
+
+![Interfaz de RutaPyme](docs/img/interfaz.jpg)
 
 ---
 
@@ -65,6 +67,7 @@ El script usa solo `urllib`, vacía la red al empezar (se puede repetir) y ejecu
 red vacía, flujo normal, dirección y ciclos, puntos inexistentes, datos inválidos, errores de la API,
 robustez del servidor, imagen y datos de ejemplo. Por cada uno imprime *esperado*, *obtenido* y **PASÓ/FALLÓ**.
 Última salida: [`pruebas/salidas/aceptacion_feature1.txt`](pruebas/salidas/aceptacion_feature1.txt) → **37/37 aprobados**.
+La interfaz se prueba con los pasos de [`pruebas/prueba_manual_interfaz.md`](pruebas/prueba_manual_interfaz.md).
 
 ## 4. Endpoints de la API REST
 
@@ -131,15 +134,50 @@ Detalle completo en [`docs/feature-1/modelado.md`](docs/feature-1/modelado.md).
 | Datos sintéticos | [`datos/red_ejemplo.json`](datos/red_ejemplo.json) (nombres inventados) |
 | Pruebas sin frameworks | [`pruebas/aceptacion_feature1.py`](pruebas/aceptacion_feature1.py) con `urllib` |
 
-## Documentación
+## 7. Estructura del proyecto
+
+```text
+├── main.py                     # arranque del servidor
+├── backend/
+│   ├── red.py                  # grafo propio + validaciones (núcleo)
+│   ├── api.py                  # API REST con http.server
+│   └── visualizacion.py        # dibujo con NetworkX (solo visualiza)
+├── frontend/                   # index.html, estilos.css, app.js
+├── datos/red_ejemplo.json      # red sintética
+├── pruebas/                    # script de aceptación y su salida
+├── docs/
+│   ├── enunciado/              # brief del cliente y guía técnica
+│   ├── feature-1/              # especificación, modelado, plan y guion del pitch
+│   └── ia/                     # bitácora de IA y uso de agentes/skills (SDD)
+├── .claude/                    # agentes y skills del equipo para Claude Code
+├── CLAUDE.md                   # reglas del proyecto para agentes de IA
+└── CONTRIBUTING.md             # ramas, commits y Pull Requests
+```
+
+## 8. Documentación
 
 | Documento | Contenido |
 |-----------|-----------|
 | [Especificación F1](docs/feature-1/especificacion.md) | Historias, reglas, criterios de aceptación y contrato de la API |
 | [Modelado F1](docs/feature-1/modelado.md) | Dirección, peso, estructura, complejidad y traza manual |
 | [Plan F1](docs/feature-1/plan.md) | Local vs despliegue, arquitectura, tareas y flujo en GitHub |
+| [Guion del pitch F1](docs/feature-1/guion-pitch.md) | 7 minutos de demo + preguntas probables |
+| [Uso de IA con SDD](docs/ia/uso-ia-sdd.md) | Cómo se administraron agentes y skills |
 | [Bitácora de IA F1](docs/ia/bitacora-feature-1.md) | Propuestas de la IA, decisión y verificación |
 
-## Flujo de trabajo en GitHub
+## 9. Flujo de trabajo en GitHub
 
-Ramas por feature o tarea, Pull Requests con plantilla y revisión cruzada. Detalle en [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Ramas por feature, Pull Requests con plantilla y revisión cruzada. Detalle en [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Cada feature cerrada tiene un tag (`v1.0.0` = Feature 1).
+
+## 10. Despliegue opcional (gratis)
+
+La decisión del equipo es **ejecutar en local** (lo pide la guía y no depende de internet en la demo).
+Si se quiere un enlace público, el repositorio ya trae [`render.yaml`](render.yaml):
+
+1. Crear una cuenta en [render.com](https://render.com) e iniciar sesión con GitHub.
+2. *New → Blueprint* y elegir este repositorio. Render lee `render.yaml`.
+3. Esperar el primer despliegue y abrir la URL `https://<nombre>.onrender.com`.
+
+Limitaciones del plan gratuito: el servicio "se duerme" tras 15 minutos sin uso (tarda ~1 minuto en
+despertar) y la red en memoria se reinicia; por eso arranca con `--ejemplo`.

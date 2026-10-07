@@ -1,0 +1,12 @@
+# Despliegue opcional en Render (plan gratuito). Ver README → "Despliegue opcional".
+services:
+  - type: web
+    name: rutapyme
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    # Render define la variable PORT; main.py la lee automáticamente.
+    startCommand: python main.py --host 0.0.0.0 --ejemplo
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
