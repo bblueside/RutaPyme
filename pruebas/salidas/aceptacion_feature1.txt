@@ -1,0 +1,112 @@
+Pruebas de aceptación · Feature 1 · RutaPyme
+API: http://127.0.0.1:8000
+
+=== Grafo vacío ===
+[PASÓ] 01. Consultar la red sin datos
+        Esperado: 200, 0 puntos, 0 conexiones, red dirigida
+        Obtenido: 200, 0 puntos, 0 conexiones, dirigida=True
+[PASÓ] 02. Listar puntos sin datos
+        Esperado: 200 con total 0
+        Obtenido: 200 con total 0
+
+=== Escenario normal de negocio ===
+[PASÓ] 03. Registrar 4 puntos (uno escrito en minúsculas)
+        Esperado: 4 × 201 e ids ['BOD-CENTRO', 'BAR-NORTE', 'BAR-SUR', 'PR-ESTACION']
+        Obtenido: [201, 201, 201, 201] e ids ['BOD-CENTRO', 'BAR-NORTE', 'BAR-SUR', 'PR-ESTACION']
+[PASÓ] 04. Registrar 3 conexiones (una con costo decimal)
+        Esperado: 3 × 201
+        Obtenido: [201, 201, 201]
+[PASÓ] 05. Listar puntos en orden de registro
+        Esperado: 200, total 4, orden BOD-CENTRO, BAR-NORTE, BAR-SUR, PR-ESTACION
+        Obtenido: 200, total 4, orden BOD-CENTRO, BAR-NORTE, BAR-SUR, PR-ESTACION
+[PASÓ] 06. Listar conexiones
+        Esperado: 200 con total 3
+        Obtenido: 200 con total 3
+[PASÓ] 07. Representación legible (lista de adyacencia y texto)
+        Esperado: BOD-CENTRO → {BAR-NORTE: 12, BAR-SUR: 8} y texto 'BOD-CENTRO [bodega] → BAR-NORTE (12 min), BAR-SUR (8 min)'
+        Obtenido: BOD-CENTRO → {'BAR-NORTE': 12, 'BAR-SUR': 8} y texto 'BOD-CENTRO [bodega] → BAR-NORTE (12 min), BAR-SUR (8 min)'
+[PASÓ] 08. Consultar un punto y sus salidas
+        Esperado: 200, tipo bodega, 2 salidas
+        Obtenido: 200, tipo bodega, 2 salidas
+
+=== Relación inexistente y dirección ===
+[PASÓ] 09. A→B no crea B→A (BAR-NORTE no tiene salida a BOD-CENTRO)
+        Esperado: 200 y salidas []
+        Obtenido: 200 y salidas []
+[PASÓ] 10. Ciclo permitido: registrar el sentido contrario con otro costo
+        Esperado: 201 y BAR-NORTE → [BOD-CENTRO 15]
+        Obtenido: 201 y BAR-NORTE → [{'destino': 'BOD-CENTRO', 'costo': 15}]
+
+=== Nodo inexistente ===
+[PASÓ] 11. Conexión hacia un destino inexistente
+        Esperado: 404 punto_inexistente
+        Obtenido: 404 punto_inexistente — «El punto de destino 'BAR-OESTE' no existe. Regístrelo primero.»
+[PASÓ] 12. Conexión desde un origen inexistente
+        Esperado: 404 punto_inexistente
+        Obtenido: 404 punto_inexistente — «El punto de origen 'BOD-NORTE' no existe. Regístrelo primero.»
+[PASÓ] 13. Consultar un punto inexistente
+        Esperado: 404 punto_inexistente
+        Obtenido: 404 punto_inexistente — «El punto 'NO-EXISTE' no existe. Regístrelo primero.»
+
+=== Datos inválidos ===
+[PASÓ] 14. Punto duplicado (mismo id en minúsculas)
+        Esperado: 409 punto_duplicado
+        Obtenido: 409 punto_duplicado — «El punto 'BOD-CENTRO' ya está registrado.»
+[PASÓ] 15. Tipo de punto inválido
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El tipo 'hospital' no es válido. Use uno de: bodega, barrio, punto_recogida.»
+[PASÓ] 16. Identificador con espacios internos
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El campo 'id' debe tener de 1 a 30 caracteres: letras sin tilde, números, '-' o '_', sin espacios. Ejemplo: BOD-CENTRO.»
+[PASÓ] 17. Identificador vacío
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El campo 'id' debe tener de 1 a 30 caracteres: letras sin tilde, números, '-' o '_', sin espacios. Ejemplo: BOD-CENTRO.»
+[PASÓ] 18. Punto sin tipo
+        Esperado: 400 formato_incorrecto
+        Obtenido: 400 formato_incorrecto — «Falta el campo 'tipo'.»
+[PASÓ] 19. Conexión duplicada (aunque con otro costo)
+        Esperado: 409 conexion_duplicada
+        Obtenido: 409 conexion_duplicada — «La conexión BOD-CENTRO → BAR-NORTE ya existe (costo 12). Recuerde que el sentido contrario es otra conexión.»
+[PASÓ] 20. Costo igual a 0
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El costo debe ser un número mayor que 0 (minutos). Se recibió 0.»
+[PASÓ] 21. Costo negativo
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El costo debe ser un número mayor que 0 (minutos). Se recibió -5.»
+[PASÓ] 22. Costo como texto
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El costo debe ser un número (por ejemplo 12 o 7.5), no 'diez'.»
+[PASÓ] 23. Costo booleano
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El costo debe ser un número (por ejemplo 12 o 7.5), no True.»
+[PASÓ] 24. Conexión sin costo
+        Esperado: 400 formato_incorrecto
+        Obtenido: 400 formato_incorrecto — «Falta el campo 'costo'.»
+[PASÓ] 25. Lazo: un punto conectado consigo mismo
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «Un trayecto debe unir dos puntos distintos ('BAR-SUR' → 'BAR-SUR' no es válido).»
+[PASÓ] 26. JSON mal formado
+        Esperado: 400 formato_incorrecto
+        Obtenido: 400 formato_incorrecto — «El cuerpo no es JSON válido. Ejemplo: {"id": "BOD-CENTRO", "tipo": "bodega"}.»
+[PASÓ] 27. Cuerpo que no es un objeto
+        Esperado: 400 formato_incorrecto
+        Obtenido: 400 formato_incorrecto — «El cuerpo debe ser un objeto JSON (entre llaves { }).»
+[PASÓ] 28. Los rechazos no modificaron la red
+        Esperado: 4 puntos y 4 conexiones
+        Obtenido: 4 puntos y 4 conexiones
+
+=== API y datos de ejemplo ===
+[PASÓ] 29. Endpoint inexistente
+        Esperado: 404 ruta_no_encontrada
+        Obtenido: 404 ruta_no_encontrada — «No existe el endpoint /api/rutas.»
+[PASÓ] 30. Método no permitido
+        Esperado: 405 metodo_no_permitido
+        Obtenido: 405 metodo_no_permitido — «PUT no está permitido en /api/puntos. Use: GET, POST.»
+[PASÓ] 31. Cargar la red sintética de ejemplo
+        Esperado: 201 con 7 puntos y 10 conexiones
+        Obtenido: 201 con 7 puntos y 10 conexiones
+[PASÓ] 32. Vaciar la red
+        Esperado: 200 y luego 0 puntos, 0 conexiones
+        Obtenido: 200 y luego 0 puntos, 0 conexiones
+
+Resultado: 32/32 escenarios aprobados.
