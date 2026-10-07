@@ -1,0 +1,24 @@
+{
+  "descripcion": "Red sintética de RutaPyme. Costos en minutos. Datos inventados, sin información real.",
+  "puntos": [
+    { "id": "BOD-CENTRO", "tipo": "bodega" },
+    { "id": "BAR-NORTE", "tipo": "barrio" },
+    { "id": "BAR-SUR", "tipo": "barrio" },
+    { "id": "BAR-ORIENTE", "tipo": "barrio" },
+    { "id": "PR-PARQUE", "tipo": "punto_recogida" },
+    { "id": "PR-ESTACION", "tipo": "punto_recogida" },
+    { "id": "PR-LAGUNA", "tipo": "punto_recogida" }
+  ],
+  "conexiones": [
+    { "origen": "BOD-CENTRO", "destino": "BAR-NORTE", "costo": 12 },
+    { "origen": "BAR-NORTE", "destino": "BOD-CENTRO", "costo": 15 },
+    { "origen": "BOD-CENTRO", "destino": "BAR-SUR", "costo": 8 },
+    { "origen": "BAR-SUR", "destino": "PR-ESTACION", "costo": 10 },
+    { "origen": "BOD-CENTRO", "destino": "PR-ESTACION", "costo": 30 },
+    { "origen": "BAR-NORTE", "destino": "PR-PARQUE", "costo": 7 },
+    { "origen": "PR-PARQUE", "destino": "BAR-ORIENTE", "costo": 9 },
+    { "origen": "BAR-ORIENTE", "destino": "BAR-SUR", "costo": 11 },
+    { "origen": "BAR-SUR", "destino": "BAR-ORIENTE", "costo": 6 },
+    { "origen": "PR-LAGUNA", "destino": "BAR-ORIENTE", "costo": 14 }
+  ]
+}
