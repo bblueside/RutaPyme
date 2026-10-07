@@ -36,7 +36,11 @@ Activar el entorno virtual:
 source .venv/bin/activate
 ```
 
-Por ahora el backend usa **solo la biblioteca estándar** de Python: no hay dependencias que instalar.
+Instalar dependencias (solo NetworkX y su motor de dibujo, ver sección 6):
+
+```bash
+pip install -r requirements.txt
+```
 
 ## 2. Ejecución
 
@@ -45,7 +49,7 @@ python main.py              # red vacía
 python main.py --ejemplo    # red sintética de datos/red_ejemplo.json
 ```
 
-La API queda en **http://127.0.0.1:8000**. Prueba rápida: abrir http://127.0.0.1:8000/api/salud.
+Abrir **http://127.0.0.1:8000** en el navegador. La misma dirección sirve la interfaz y la API.
 
 Opciones: `--puerto 8080`, `--host 0.0.0.0`. También se leen las variables de entorno `PORT` y `HOST`.
 
@@ -57,10 +61,10 @@ Con el servidor encendido, en otra terminal:
 python pruebas/aceptacion_feature1.py
 ```
 
-El script usa solo `urllib`, vacía la red al empezar (se puede repetir) y ejecuta **32 escenarios**:
-red vacía, flujo normal, dirección y ciclos, puntos inexistentes, datos inválidos, errores de la API
-y datos de ejemplo. Por cada uno imprime *esperado*, *obtenido* y **PASÓ/FALLÓ**.
-Última salida: [`pruebas/salidas/aceptacion_feature1.txt`](pruebas/salidas/aceptacion_feature1.txt) → **32/32 aprobados**.
+El script usa solo `urllib`, vacía la red al empezar (se puede repetir) y ejecuta **33 escenarios**:
+red vacía, flujo normal, dirección y ciclos, puntos inexistentes, datos inválidos, errores de la API,
+imagen y datos de ejemplo. Por cada uno imprime *esperado*, *obtenido* y **PASÓ/FALLÓ**.
+Última salida: [`pruebas/salidas/aceptacion_feature1.txt`](pruebas/salidas/aceptacion_feature1.txt) → **33/33 aprobados**.
 
 ## 4. Endpoints de la API REST
 
@@ -74,6 +78,7 @@ y datos de ejemplo. Por cada uno imprime *esperado*, *obtenido* y **PASÓ/FALLÓ
 | GET | `/api/conexiones` | — | 200 `{total, conexiones}` |
 | POST | `/api/conexiones` | `{"origen": "BOD-CENTRO", "destino": "BAR-NORTE", "costo": 12}` | 201 · 400 · 404 · 409 |
 | GET | `/api/red` | — | 200 representación legible (lista de adyacencia + texto) |
+| GET | `/api/red/imagen` | — | 200 PNG dibujado con NetworkX |
 | POST | `/api/red/ejemplo` | — | 201 carga la red sintética |
 | DELETE | `/api/red` | — | 200 vacía la red |
 
@@ -96,6 +101,35 @@ Ejemplo rápido desde PowerShell:
 ```powershell
 Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/api/puntos -ContentType "application/json" -Body '{"id":"BOD-CENTRO","tipo":"bodega"}'
 ```
+
+## 5. Decisiones de diseño
+
+Detalle completo en [`docs/feature-1/modelado.md`](docs/feature-1/modelado.md).
+
+- **Nodos** = puntos (`bodega`, `barrio`, `punto_recogida`). **Aristas** = trayectos disponibles.
+- **Red dirigida:** A→B no implica B→A (calles de un solo sentido, subir no cuesta lo mismo que bajar).
+  Si fuera no dirigida, el sistema podría inventar regresos que no existen.
+- **Peso (`costo`)** = tiempo estimado en minutos, siempre **> 0**. Así tiene sentido en el negocio y
+  sirve para el algoritmo de ruta de menor costo de la Feature 3.
+- **Representación principal: lista de adyacencia** `{punto: {destino: costo}}`. La operación que más
+  harán los recorridos es "¿a dónde puedo ir desde aquí?": cuesta **O(grado)** en vez de **O(V)** con una
+  matriz, y la memoria es **O(V + E)** en vez de **O(V²)**. El diccionario interno detecta duplicados en O(1).
+- **Validaciones** en el núcleo (`backend/red.py`), no en la interfaz: toda entrada pasa por las mismas reglas.
+- **Sin frameworks:** API con `http.server` de la biblioteca estándar. Interfaz en HTML, CSS y JS nativos.
+
+![Red de ejemplo dibujada con NetworkX](docs/img/red-ejemplo.png)
+
+## 6. Reglas de la guía técnica y cómo se cumplen
+
+| Regla | Cómo se cumple |
+|-------|----------------|
+| Python 3.12+ con API REST | `http.server` + `json` (biblioteca estándar) |
+| Entorno virtual y `requirements.txt` | `.venv` + [`requirements.txt`](requirements.txt) |
+| Grafo y algoritmos propios | [`backend/red.py`](backend/red.py) no importa NetworkX |
+| NetworkX solo para visualizar | Solo se importa en [`backend/visualizacion.py`](backend/visualizacion.py), que copia la red ya validada para dibujarla. `matplotlib` es el motor que NetworkX usa para producir la imagen |
+| Frontend consume el backend real | [`frontend/app.js`](frontend/app.js) usa `fetch('/api/...')` |
+| Datos sintéticos | [`datos/red_ejemplo.json`](datos/red_ejemplo.json) (nombres inventados) |
+| Pruebas sin frameworks | [`pruebas/aceptacion_feature1.py`](pruebas/aceptacion_feature1.py) con `urllib` |
 
 ## Documentación
 
