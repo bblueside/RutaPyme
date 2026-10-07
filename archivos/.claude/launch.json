@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "rutapyme",
+      "runtimeExecutable": ".venv/Scripts/python.exe",
+      "runtimeArgs": ["main.py", "--ejemplo"],
+      "port": 8000
+    }
+  ]
+}
