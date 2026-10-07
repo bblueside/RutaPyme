@@ -1,0 +1,5 @@
+# El backend (API, grafo y validaciones) usa SOLO la biblioteca estándar de Python 3.12+.
+# Estas dependencias se usan únicamente en backend/visualizacion.py para DIBUJAR la red
+# que ya construyó nuestro propio código. matplotlib es el motor de dibujo que usa NetworkX.
+networkx==3.7
+matplotlib==3.11.2
