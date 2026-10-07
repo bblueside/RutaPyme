@@ -1,0 +1,3 @@
+# Normaliza finales de línea para que Windows y otros sistemas vean los mismos archivos
+* text=auto eol=lf
+*.png binary
