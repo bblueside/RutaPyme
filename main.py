@@ -1,4 +1,4 @@
-"""Punto de entrada: inicia la API REST de RutaPyme.
+"""Punto de entrada: inicia la API REST y la interfaz web de RutaPyme.
 
 Uso:
     python main.py              # red vacía en http://127.0.0.1:8000
@@ -14,7 +14,7 @@ from backend.api import cargar_red_ejemplo, crear_servidor
 
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
-    parser = argparse.ArgumentParser(description="Servidor de RutaPyme (API REST).")
+    parser = argparse.ArgumentParser(description="Servidor de RutaPyme (API REST + interfaz web).")
     parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"),
                         help="Dirección de escucha (use 0.0.0.0 al desplegar).")
     parser.add_argument("--puerto", type=int, default=int(os.environ.get("PORT", "8000")),

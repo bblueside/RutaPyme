@@ -178,10 +178,15 @@ def escenarios_invalidos():
               f"{puntos} puntos y {conexiones} conexiones", (puntos, conexiones) == (4, 4))
 
 
-def escenarios_api_y_ejemplo():
-    seccion("API y datos de ejemplo")
+def escenarios_api_y_visualizacion():
+    seccion("API, visualización y datos de ejemplo")
     esperar_error("Endpoint inexistente", "GET", "/api/rutas", None, 404, "ruta_no_encontrada")
     esperar_error("Método no permitido", "PUT", "/api/puntos", {"id": "X", "tipo": "barrio"}, 405, "metodo_no_permitido")
+
+    estado, contenido, tipo = llamar("GET", "/api/red/imagen")
+    es_png = isinstance(contenido, bytes) and contenido.startswith(b"\x89PNG")
+    verificar("Imagen de la red dibujada con NetworkX", "200 image/png con firma PNG",
+              f"{estado} {tipo} con firma PNG={es_png}", estado == 200 and tipo == "image/png" and es_png)
 
     estado, cuerpo, _ = llamar("POST", "/api/red/ejemplo")
     verificar("Cargar la red sintética de ejemplo", "201 con 7 puntos y 10 conexiones",
@@ -209,7 +214,7 @@ def main():
     escenarios_direccion()
     escenarios_inexistentes()
     escenarios_invalidos()
-    escenarios_api_y_ejemplo()
+    escenarios_api_y_visualizacion()
 
     aprobados = sum(resultados)
     print(f"\nResultado: {aprobados}/{len(resultados)} escenarios aprobados.")
