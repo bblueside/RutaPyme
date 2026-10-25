@@ -48,6 +48,23 @@
      Nothing here is required — a config with only `clip`/`connectors` still works on
      phones; the mobile variants just make it lighter and smoother.
 
+   FUENTES MÚLTIPLES (variante de la landing de RutaPyme; plan: docs/landing/plan-assets-upscale.md)
+     clip / connectors[i] aceptan una cadena (como antes) o un objeto con hasta cuatro variantes:
+       { av1, h264, movilAv1, movilH264 }
+     Se elige una sola vez por clip, en el momento de descargarlo:
+       escritorio con AV1 por hardware      -> av1 (1080p)
+       escritorio sin AV1 por hardware      -> h264 (720p)
+       móvil, saveData o conexión 2g/3g     -> movilAv1 si hay hardware; si no, movilH264
+     El hardware se consulta con navigator.mediaCapabilities.decodingInfo (supported + smooth +
+     powerEfficient). Si un AV1 falla al decodificar, ese clip se vuelve a pedir en H.264.
+     still / stillMobile aceptan una cadena o { base, anchos:[1280,1920,2560] }; con la forma de
+     objeto se genera <picture> con AVIF (<source>) y JPEG (<img>) en `${base}-${ancho}.{avif,jpg}`.
+     En móvil solo se ofrece el ancho menor. La primera escena es el LCP: eager + fetchpriority high.
+     Descargas: un solo fetch a la vez. Prioridad: segmento visible (priority 'high') -> siguiente en
+     la dirección del scroll -> resto del recorrido (solo escritorio; en móvil no se precarga más).
+     Si el visitante salta lejos, la descarga de baja prioridad en curso se cancela (AbortController).
+     Pruebas: ?av1=0 fuerza H.264; ?ahorro=1 simula ahorro de datos.
+
    THEME (CSS custom properties; set on the container or :root to override)
      --sw-bg         page background (match your scene bg for seamless posters)
      --sw-ink        primary text
@@ -80,13 +97,22 @@ function mountScrollWorld(container, config) {
   const N = SECTIONS.length;
   if (!N) return;
 
+  // Perfil del visitante (se lee una vez al montar). Ahorro de datos o conexión lenta = móvil.
+  const consulta = new URLSearchParams(window.location.search);
+  const conexion = navigator.connection || {};
+  const ahorroDatos = consulta.get('ahorro') === '1' || conexion.saveData === true ||
+    /^(slow-2g|2g|3g)$/.test(conexion.effectiveType || '');
+  const av1Prohibido = consulta.get('av1') === '0';
+  const usarMovil = () => isMobile() || ahorroDatos;
+  const capacidades = { av1: false, movilAv1: false };   // AV1 por hardware (escritorio 1080p / móvil 720p)
+
   injectCSS();
   container.classList.add('sw-root');
 
   // ---- build the interleaved segment chain: dive0, conn0, dive1, … diveN-1 ----
   const SEGMENTS = [];
   SECTIONS.forEach((s, i) => {
-    const dive = { kind: 'dive', si: i, clip: s.clip, clipM: s.clipMobile, still: s.still, stillM: s.stillMobile,
+    const dive = { kind: 'dive', si: i, fuentes: normalizarFuentes(s.clip, s.clipMobile), still: s.still, stillM: s.stillMobile,
                    accent: s.accent, w: s.scroll || DIVE_W, linger: s.linger || 0 };
     SEGMENTS.push(dive);
     s._seg = dive;
@@ -94,7 +120,7 @@ function mountScrollWorld(container, config) {
     // crossfade directly (no fly-over). Lets a page complete even when a
     // connector can't be generated (e.g. a content-filter false-positive).
     if (i < N - 1 && CONNECTORS[i]) {
-      SEGMENTS.push({ kind: 'conn', si: i, clip: CONNECTORS[i], clipM: CONNECTORS_M[i],
+      SEGMENTS.push({ kind: 'conn', si: i, fuentes: normalizarFuentes(CONNECTORS[i], CONNECTORS_M[i]),
                       still: SECTIONS[i + 1].still, stillM: SECTIONS[i + 1].stillMobile,
                       accent: SECTIONS[i + 1].accent, w: CONN_W });
     }
@@ -115,8 +141,13 @@ function mountScrollWorld(container, config) {
   const topbar = el('div', 'sw-topbar');
   if (config.brand) {
     const brand = el('a', 'sw-brand'); brand.href = (config.brand.href || '#');
-    brand.appendChild(el('span', 'sw-brand__mark'));
-    const nm = el('span', 'sw-brand__name'); nm.textContent = config.brand.name || ''; brand.appendChild(nm);
+    if (config.brand.logo) {
+      const logo = el('img', 'sw-brand__logo'); logo.src = config.brand.logo; logo.alt = config.brand.name || '';
+      brand.appendChild(logo);
+    } else {
+      brand.appendChild(el('span', 'sw-brand__mark'));
+      const nm = el('span', 'sw-brand__name'); nm.textContent = config.brand.name || ''; brand.appendChild(nm);
+    }
     topbar.appendChild(brand);
   }
   const nav = el('nav', 'sw-nav'); if (config.nav !== false) topbar.appendChild(nav);
@@ -136,14 +167,17 @@ function mountScrollWorld(container, config) {
   [sky, scrollbar, topbar, stage, copylayer, route, hint, track].forEach(n => container.appendChild(n));
 
   // segment scenes
-  SEGMENTS.forEach(s => {
+  SEGMENTS.forEach((s, k) => {
     const scene = el('div', 'sw-scene'); scene.style.setProperty('--sw-accent', s.accent || '');
-    const img = el('img', 'sw-scene__still'); img.alt = ''; img.decoding = 'async'; img.loading = 'lazy';
+    const img = el('img', 'sw-scene__still'); img.alt = ''; img.decoding = 'async';
+    // El póster de la primera escena es el LCP: se pide ya y con prioridad alta.
+    img.loading = k === 0 ? 'eager' : 'lazy';
+    img.fetchPriority = k === 0 ? 'high' : 'low';
     const poster = (isMobile() && s.stillM) ? s.stillM : s.still;
-    if (poster) img.src = poster;
-    scene.appendChild(img); stage.appendChild(scene);
+    scene.appendChild(construirPoster(img, poster, usarMovil())); stage.appendChild(scene);
     s.el = scene; s.img = img; s.video = null; s.hasClip = false;
     s.loading = false; s.ready = false; s.cur = 0; s.target = 0; s.visible = false;
+    s.fallo = false; s.av1Roto = false;
   });
 
   // per-section copy / route / nav
@@ -178,6 +212,9 @@ function mountScrollWorld(container, config) {
   const lingerEase = (x, L) => { L = clamp(L); const c = x - 0.5; return (1 - L) * x + L * (4 * c * c * c + 0.5); };
   let vh = window.innerHeight, stageX = 0, totalW = 0, activeIndex = -1, ticking = false;
   let laidOutW = window.innerWidth;   // width the current layout was computed at (see onResize)
+  let ciActual = 0, ultimoY = window.scrollY || 0, direccion = 1;   // segmento actual y sentido del scroll
+  let activa = null;                  // descarga en curso: { seg, indice, ctrl, alta }
+  let capacidadesListas = false;      // true cuando ya se sondeó el hardware AV1
 
   function layout() {
     vh = window.innerHeight;
@@ -195,28 +232,107 @@ function mountScrollWorld(container, config) {
     window.scrollTo({ top: seg.start + (seg.end - seg.start) * 0.5, behavior: reduce ? 'auto' : 'smooth' });
   }
 
-  function loadClip(s) {
+  // ---- fuentes y cola de descarga ----
+  // Elige la variante del clip según el perfil. Devuelve { url, esAv1 } o null.
+  function elegirFuente(s) {
+    const f = s.fuentes;
+    if (!f) return null;
+    const av1Vale = !s.av1Roto;
+    const candidatas = usarMovil()
+      ? [[f.movilAv1, av1Vale && capacidades.movilAv1, true], [f.movilH264, true, false], [f.h264, true, false],
+         [f.av1, av1Vale && capacidades.av1, true]]
+      : [[f.av1, av1Vale && capacidades.av1, true], [f.h264, true, false], [f.movilH264, true, false],
+         [f.movilAv1, av1Vale && capacidades.movilAv1, true]];
+    for (const [url, vale, esAv1] of candidatas) if (url && vale) return { url, esAv1 };
+    // Último recurso: un clip AV1 sin hardware confirmado antes que ningún movimiento.
+    const resto = av1Vale ? (f.av1 || f.movilAv1) : null;
+    return resto ? { url: resto, esAv1: true } : null;
+  }
+
+  const necesitaDescarga = s => !!s.fuentes && !s.loading && !s.hasClip && !s.fallo && Date.now() >= (s.reintentoEn || 0);
+
+  // Reordena la cola con la posición actual y arranca la siguiente descarga si no hay una activa.
+  // Solo hay un fetch a la vez; los segmentos visibles van con prioridad alta y la precarga con baja.
+  function planificarDescargas() {
     // Under prefers-reduced-motion we never load the clips at all — the stills stay up
     // and simply cross-dissolve as you scroll. No scrubbed video motion, no decode cost.
-    if (reduce || s.loading || !s.clip) return;
+    if (reduce || !capacidadesListas) return;
+    const visibles = [ciActual];
+    SEGMENTS.forEach((s, k) => { if (s.visible && k !== ciActual) visibles.push(k); });
+    const orden = visibles.slice();
+    const agregar = k => { if (k >= 0 && k < NSEG && orden.indexOf(k) < 0) orden.push(k); };
+    agregar(ciActual + direccion);
+    if (!usarMovil()) {
+      for (let d = 1; d < NSEG; d++) { agregar(ciActual + d * direccion); agregar(ciActual - d * direccion); }
+    }
+    const pendientes = orden.filter(k => necesitaDescarga(SEGMENTS[k]));
+    if (activa && !activa.alta) {
+      const urgente = pendientes.some(k => visibles.indexOf(k) >= 0);
+      if (urgente || orden.indexOf(activa.indice) < 0) { activa.ctrl.abort(); activa = null; }
+    }
+    if (activa || !pendientes.length) return;
+    descargar(SEGMENTS[pendientes[0]], pendientes[0], visibles.indexOf(pendientes[0]) >= 0);
+  }
+
+  function descargar(s, indice, alta) {
+    const fuente = elegirFuente(s);
+    if (!fuente) { s.fallo = true; return; }
     s.loading = true;
-    // Serve the lighter mobile encode on phones when one was provided.
-    const url = (isMobile() && s.clipM) ? s.clipM : s.clip;
-    fetch(url).then(r => r.ok ? r.blob() : Promise.reject(new Error('404')))
-      .then(blob => {
-        const v = document.createElement('video');
-        v.className = 'sw-scene__video';
-        v.muted = true; v.playsInline = true; v.preload = 'auto';
-        v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
-        v.src = URL.createObjectURL(blob);
-        v.addEventListener('loadedmetadata', () => { s.ready = true; read(); });
-        // Reveal the video (hide the still poster) only once a real frame has
-        // painted — on iOS a seeked-but-never-played muted video stays blank, so
-        // hiding the still on metadata alone would flash an empty scene.
-        v.addEventListener('seeked', () => { s.el.classList.add('has-clip'); }, { once: true });
-        v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
-        s.el.appendChild(v); s.video = v; s.hasClip = true;
-      }).catch(() => { s.loading = false; });
+    const ctrl = new AbortController();
+    const propia = { seg: s, indice, ctrl, alta };
+    activa = propia;
+    fetch(fuente.url, { signal: ctrl.signal, priority: alta ? 'high' : 'low' })
+      .then(r => r.ok ? r.blob() : Promise.reject(new Error(String(r.status))))
+      .then(blob => montarVideo(s, blob, fuente))
+      .catch(e => {
+        s.loading = false;
+        if (e && e.name === 'AbortError') return;
+        // Un corte de red no deja el clip perdido: hasta 3 intentos, con pausa entre ellos.
+        s.intentos = (s.intentos || 0) + 1;
+        if (s.intentos >= 3) { s.fallo = true; return; }
+        s.reintentoEn = Date.now() + 1500 * s.intentos;
+        setTimeout(planificarDescargas, 1500 * s.intentos + 50);
+      })
+      .then(() => { if (activa === propia) activa = null; planificarDescargas(); });
+  }
+
+  function montarVideo(s, blob, fuente) {
+    const v = document.createElement('video');
+    v.className = 'sw-scene__video';
+    v.muted = true; v.playsInline = true; v.preload = 'auto';
+    v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+    v.src = URL.createObjectURL(blob);
+    v.addEventListener('loadedmetadata', () => { s.ready = true; read(); });
+    // Reveal the video (hide the still poster) only once a real frame has
+    // painted — on iOS a seeked-but-never-played muted video stays blank, so
+    // hiding the still on metadata alone would flash an empty scene.
+    v.addEventListener('seeked', () => { s.el.classList.add('has-clip'); }, { once: true });
+    v.addEventListener('loadeddata', () => { try { v.pause(); } catch (e) {} if (userReady) primeVideo(v); });
+    // Si el navegador dice poder con AV1 y luego no decodifica, ese clip se pide de nuevo en H.264.
+    v.addEventListener('error', () => {
+      if (!fuente.esAv1 || s.av1Roto) return;
+      s.av1Roto = true;
+      URL.revokeObjectURL(v.src); v.remove();
+      s.video = null; s.hasClip = false; s.ready = false; s.loading = false;
+      s.el.classList.remove('has-clip');
+      planificarDescargas();
+    });
+    s.el.appendChild(v); s.video = v; s.hasClip = true;
+  }
+
+  // Sondea una vez qué AV1 decodifica el equipo por hardware (decodingInfo exige supported,
+  // smooth y powerEfficient; sin hardware un AV1 en software podría trabar el scrub).
+  function sondearCapacidades() {
+    const mc = navigator.mediaCapabilities;
+    if (reduce || av1Prohibido || !mc || !mc.decodingInfo) return Promise.resolve();
+    const probar = (ancho, alto, bitrate) => {
+      const consultaAv1 = mc.decodingInfo({ type: 'file', video: {
+        contentType: 'video/mp4; codecs="av01.0.08M.08"', width: ancho, height: alto, bitrate, framerate: 16 } })
+        .then(r => !!(r.supported && r.smooth && r.powerEfficient)).catch(() => false);
+      return Promise.race([consultaAv1, new Promise(res => setTimeout(() => res(false), 1500))]);
+    };
+    return Promise.all([probar(1920, 1080, 3000000), probar(1280, 720, 1500000)])
+      .then(([escritorio, movil]) => { capacidades.av1 = escritorio; capacidades.movilAv1 = movil; });
   }
 
   function read() {
@@ -224,10 +340,11 @@ function mountScrollWorld(container, config) {
     const fade = CROSSFADE * vh;
     let ci = 0;
     for (let i = 0; i < NSEG; i++) if (y >= SEGMENTS[i].start) ci = i;
+    ciActual = ci;
+    if (y !== ultimoY) { direccion = y > ultimoY ? 1 : -1; ultimoY = y; }
 
     for (let i = 0; i < NSEG; i++) {
       const s = SEGMENTS[i];
-      if (y > s.start - 1.6 * vh && y < s.end + 1.6 * vh) loadClip(s);
       const local = clamp((y - s.start) / (s.end - s.start), 0, 1);
       s.target = s.linger ? lingerEase(local, s.linger) : local;
       let outside = 0;
@@ -264,6 +381,7 @@ function mountScrollWorld(container, config) {
       nav.querySelectorAll('.sw-nav__item').forEach((n, k) => n.classList.toggle('is-active', k === near));
       container.style.setProperty('--sw-accent', SECTIONS[near].accent || '');
     }
+    planificarDescargas();
     scrollbarFill.style.transform = `scaleX(${clamp(y / (totalW * vh))})`;
     hint.style.opacity = clamp(1 - y / (0.5 * vh));
     if (particles) particles.style.transform = `translate3d(0, ${-y * 0.05}px, 0)`;
@@ -321,6 +439,7 @@ function mountScrollWorld(container, config) {
   window.addEventListener('resize', onResize);
   window.addEventListener('orientationchange', layout);
   window.addEventListener('load', layout);
+  sondearCapacidades().then(() => { capacidadesListas = true; read(); });
   layout();
   requestAnimationFrame(raf);
 
@@ -334,6 +453,34 @@ function mountScrollWorld(container, config) {
     if (cta.secondary) h += `<a class="sw-btn sw-btn--ghost" href="${esc(cta.secondary.href || '#')}">${esc(cta.secondary.label)}</a>`;
     return h;
   }
+}
+
+// Una cadena es un solo archivo (H.264); un objeto trae las variantes { av1, h264, movilAv1, movilH264 }.
+function normalizarFuentes(principal, movil) {
+  if (!principal) return null;
+  if (typeof principal === 'object') {
+    return { av1: principal.av1 || null, h264: principal.h264 || null,
+             movilAv1: principal.movilAv1 || null, movilH264: principal.movilH264 || null };
+  }
+  return { av1: null, h264: principal, movilAv1: null, movilH264: movil || null };
+}
+
+// Pone el póster en `img`. Con { base, anchos } arma <picture> con AVIF y respaldo JPEG;
+// `estrecho` (móvil o ahorro de datos) deja solo el ancho menor. Devuelve el nodo a insertar.
+function construirPoster(img, still, estrecho) {
+  if (!still) return img;
+  if (typeof still === 'string') { img.src = still; return img; }
+  const anchos = still.anchos.slice().sort((a, b) => a - b);
+  const usados = estrecho ? anchos.slice(0, 1) : anchos;
+  const lista = ext => usados.map(a => `${still.base}-${a}.${ext} ${a}w`).join(', ');
+  const por = usados.filter(a => a <= 1920);
+  img.srcset = lista('jpg'); img.sizes = '100vw';
+  img.src = `${still.base}-${por.length ? por[por.length - 1] : usados[0]}.jpg`;
+  const avif = document.createElement('source');
+  avif.type = 'image/avif'; avif.srcset = lista('avif'); avif.sizes = '100vw';
+  const picture = document.createElement('picture');
+  picture.appendChild(avif); picture.appendChild(img);
+  return picture;
 }
 
 function seedParticles(host, reduce) {
@@ -357,8 +504,8 @@ function injectCSS() {
   if (document.getElementById('sw-css')) return;
   const css = `
   .sw-root{--sw-bg:#F5EDE0;--sw-ink:#241d2b;--sw-ink-soft:#6a6072;--sw-accent:#8a7bb5;
-    --sw-font-display:ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;
-    --sw-font-body:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif;
+    --sw-font-display:"Inter Tight",system-ui,sans-serif;
+    --sw-font-body:"Manrope",system-ui,sans-serif;
     color:var(--sw-ink);font-family:var(--sw-font-body);}
   html,body{margin:0;background:var(--sw-bg,#F5EDE0);overflow-x:hidden;}
   .sw-sky{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:var(--sw-bg);}
@@ -375,10 +522,11 @@ function injectCSS() {
   .sw-topbar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:clamp(14px,2.4vw,26px) clamp(18px,5vw,64px);}
   .sw-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--sw-ink);}
   .sw-brand__mark{width:24px;height:28px;border-radius:7px 7px 10px 10px;background:linear-gradient(160deg,var(--sw-accent),color-mix(in srgb,var(--sw-accent) 60%,#000));box-shadow:0 6px 14px color-mix(in srgb,var(--sw-accent) 40%,transparent);}
+  .sw-brand__logo{display:block;height:34px;width:auto;}
   .sw-brand__name{font-family:var(--sw-font-display);font-weight:700;font-size:1.1rem;}
   .sw-nav{display:flex;gap:4px;padding:5px;background:color-mix(in srgb,#fff 55%,transparent);backdrop-filter:blur(10px);border:1px solid color-mix(in srgb,var(--sw-accent) 16%,transparent);border-radius:999px;}
-  .sw-nav__item{font:inherit;font-size:.82rem;color:var(--sw-ink-soft);border:0;background:transparent;cursor:pointer;padding:7px 14px;border-radius:999px;transition:color .25s,background .25s;}
-  .sw-nav__item:hover{color:var(--sw-ink);} .sw-nav__item.is-active{color:#fff;background:var(--sw-accent);}
+  .sw-nav__item{font:inherit;font-family:var(--sw-font-body);font-weight:600;font-size:.82rem;color:var(--sw-ink-soft);border:0;background:transparent;cursor:pointer;padding:7px 14px;border-radius:999px;transition:color .25s,background .25s;}
+  .sw-nav__item:hover{color:var(--sw-ink);} .sw-nav__item.is-active{color:var(--sw-bg);background:var(--sw-accent);}
   .sw-topcta{text-decoration:none;font-weight:600;font-size:.9rem;color:#fff;background:var(--sw-ink);padding:10px 20px;border-radius:999px;white-space:nowrap;}
   .sw-stage{position:fixed;inset:0;z-index:10;pointer-events:none;}
   .sw-scene{position:absolute;inset:0;opacity:0;overflow:hidden;will-change:opacity;}
@@ -403,7 +551,7 @@ function injectCSS() {
   .sw-route__dot i{width:9px;height:9px;border-radius:50%;background:color-mix(in srgb,var(--sw-accent) 40%,transparent);transition:transform .3s,background .3s,box-shadow .3s;}
   .sw-route__dot:hover i{transform:scale(1.25);background:var(--sw-accent);}
   .sw-route__dot.is-active i{background:var(--sw-accent);transform:scale(1.4);box-shadow:0 0 0 5px color-mix(in srgb,var(--sw-accent) 22%,transparent);}
-  .sw-route__label{position:absolute;right:24px;top:50%;transform:translateY(-50%) translateX(6px);white-space:nowrap;font-size:.78rem;font-weight:600;color:var(--sw-ink);background:color-mix(in srgb,#fff 85%,transparent);backdrop-filter:blur(6px);padding:5px 11px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;border:1px solid color-mix(in srgb,var(--sw-accent) 14%,transparent);}
+  .sw-route__label{position:absolute;right:24px;top:50%;transform:translateY(-50%) translateX(6px);white-space:nowrap;font-family:var(--sw-font-body);font-size:.78rem;font-weight:600;color:var(--sw-bg);background:color-mix(in srgb,#fff 85%,transparent);backdrop-filter:blur(6px);padding:5px 11px;border-radius:999px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;border:1px solid color-mix(in srgb,var(--sw-accent) 14%,transparent);}
   .sw-route__dot:hover .sw-route__label,.sw-route__dot.is-active .sw-route__label{opacity:1;transform:translateY(-50%) translateX(0);}
   .sw-hint{position:fixed;left:50%;bottom:26px;z-index:30;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:10px;font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--sw-ink-soft);transition:opacity .3s;}
   .sw-hint i{width:22px;height:34px;border-radius:12px;border:2px solid color-mix(in srgb,var(--sw-ink) 28%,transparent);position:relative;}
