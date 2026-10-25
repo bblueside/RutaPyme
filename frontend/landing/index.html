@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RutaPyme · De la bodega a la ruta de menor costo</title>
+  <meta name="description" content="Desplázate para recorrer la red operativa de RutaPyme: de la bodega al grafo, la cobertura y la ruta de menor costo.">
+  <style>
+    /* Tema blueprint aprobado: fondo y línea idénticos a los de las escenas generadas. */
+    :root, .sw-root {
+      --sw-bg: #0146C1;
+      --sw-ink: #E3E5FC;
+      --sw-ink-soft: #B9C2F0;
+      --sw-accent: #E3E5FC;
+    }
+    html, body { margin: 0; background: #0146C1; }
+    /* El motor rellena los botones principales con --sw-ink (claro): el texto va en azul. */
+    .sw-btn--primary, .sw-topcta { color: #0146C1; }
+  </style>
+</head>
+<body>
+  <div id="inicio"></div>
+  <div id="mundo"></div>
+
+  <script src="scrub-engine.js"></script>
+  <script>
+    // La interfaz real la sirve el backend (python -m backend.api) en este puerto.
+    const URL_INTERFAZ = 'http://127.0.0.1:8000';
+
+    mountScrollWorld(document.getElementById('mundo'), {
+      brand: { name: 'RutaPyme', href: '#inicio' },
+      cta: { label: 'Ver la red en vivo', href: URL_INTERFAZ },
+      hint: 'desplázate para recorrer la red',
+      diveScroll: 1.3,
+      connScroll: 0.9,
+      sections: [
+        {
+          id: 'bodega', label: 'Bodega',
+          still: 'escenas/escena_1.jpg',
+          clip: 'videos/escena_1.mp4',
+          eyebrow: 'Red operativa de entregas',
+          title: 'Todo empieza en la bodega.',
+          body: 'Hoy los pedidos salen "a ojo" y a veces por conexiones cerradas.',
+          tags: ['Bodega', 'Pedidos'],
+        },
+        {
+          id: 'modelo', label: 'Modelo',
+          still: 'escenas/escena_2.jpg',
+          clip: 'videos/escena_2.mp4',
+          scroll: 1.5, linger: 0.35,
+          eyebrow: 'Del instinto al modelo',
+          title: 'Planear con datos, no a ojo.',
+          body: 'RutaPyme modela la operación como un grafo propio, servido por una API REST.',
+          tags: ['Grafo', 'API REST'],
+        },
+        {
+          id: 'red', label: 'Red',
+          still: 'escenas/escena_3.jpg',
+          clip: 'videos/escena_3.mp4',
+          scroll: 1.5, linger: 0.35,
+          eyebrow: 'Puntos y trayectos',
+          title: 'Cada lugar es un nodo; cada calle, un trayecto con dirección y costo.',
+          body: 'Los trayectos cerrados quedan fuera de la red.',
+          tags: ['Dirigido', 'Ponderado'],
+        },
+        {
+          id: 'ruta', label: 'Ruta',
+          still: 'escenas/escena_4.jpg',
+          clip: 'videos/escena_4.mp4',
+          scroll: 1.7, linger: 0.4,
+          eyebrow: 'Cobertura y ruta',
+          title: 'Hasta dónde llego, y por dónde me cuesta menos.',
+          body: 'Desde una bodega, RutaPyme muestra los destinos alcanzables y la ruta más barata.',
+          tags: ['Alcance', 'Menor costo'],
+          cta: { primary: { label: 'Ver la red en vivo', href: URL_INTERFAZ },
+                 secondary: { label: 'Volver al inicio', href: '#inicio' } },
+        },
+      ],
+      // escena_1 es el conector de prueba 1→2 y entrada_2 arranca en su último fotograma real:
+      // no hace falta conector aéreo entre ellas (null = fundido directo).
+      connectors: [null, 'videos/conector_2_3.mp4', 'videos/conector_3_4.mp4'],
+    });
+  </script>
+</body>
+</html>
