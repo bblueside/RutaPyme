@@ -1,0 +1,21 @@
+# Landing estática de RutaPyme en Render (plan: docs/landing/plan-assets-upscale.md, §4.3 y D2).
+# Publica frontend/landing/. Los assets llevan la versión en el nombre (escena_1.v2.av1.mp4),
+# por eso pueden cachearse un año sin revalidar; el HTML y el motor se revalidan siempre.
+services:
+  - type: web
+    name: rutapyme-landing
+    runtime: static
+    staticPublishPath: frontend/landing
+    headers:
+      - path: /videos/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /escenas/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /scrub-engine.js
+        name: Cache-Control
+        value: no-cache
