@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>RutaPyme · Rutas más baratas con inteligencia de grafos</title>
+  <meta name="description" content="Convierte tu red de entregas en un grafo y calcula en segundos la ruta de menor costo. Menos kilómetros, más entregas por día.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="secciones.css">
+  <!-- El póster de la escena 1 es el LCP: se pide antes de que el motor monte el DOM. -->
+  <link rel="preload" as="image" type="image/avif" fetchpriority="high" imagesizes="100vw"
+        imagesrcset="escenas/opt/escena_1.v2-1280.avif 1280w, escenas/opt/escena_1.v2-1920.avif 1920w, escenas/opt/escena_1.v2-2560.avif 2560w">
+  <style>
+    /* Tema blueprint aprobado: fondo y línea idénticos a los de las escenas generadas. */
+    :root, .sw-root {
+      --sw-bg: #0146C1;
+      --sw-ink: #E3E5FC;
+      --sw-ink-soft: #B9C2F0;
+      --sw-accent: #E3E5FC;
+      --sw-font-display: "Inter Tight", system-ui, sans-serif;
+      --sw-font-body: "Manrope", system-ui, sans-serif;
+    }
+    html, body { margin: 0; background: #0146C1; }
+    /* El motor rellena los botones principales con --sw-ink (claro): el texto va en azul. */
+    .sw-btn--primary, .sw-topcta { color: #0146C1; }
+    /* Copys un poco más pequeños que los del motor (el prefijo html body gana por especificidad). */
+    html body .sw-copy__eyebrow { font-size: .72rem; }
+    html body .sw-copy__title { font-size: clamp(1.7rem, 3.7vw, 3rem); }
+    html body .sw-copy__body { font-size: clamp(.9rem, 1.1vw, 1rem); margin: 10px 0 0; }
+    html body .sw-copy__cta { margin-top: 14px; }
+    @media (max-width: 768px) {
+      html body .sw-copy__title { font-size: clamp(1.6rem, 6.3vw, 2.3rem); }
+      html body .sw-copy__body { font-size: clamp(.88rem, 3.2vw, .98rem); }
+    }
+  </style>
+</head>
+<body>
+  <div id="inicio"></div>
+  <div id="mundo"></div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="logo-grafo" viewBox="0 0 32 32">
+      <circle cx="7" cy="8" r="4"/><circle cx="25" cy="10" r="4"/><circle cx="14" cy="25" r="4"/>
+      <path d="M10.5 9 L21 10 M23 13.5 L16.5 22 M12 21.5 L8 11.5"/>
+    </symbol>
+  </svg>
+
+  <main class="landing-secciones">
+
+    <!-- S1 · Cifras de la red -->
+    <section class="ls-seccion ls-seccion--rejilla" aria-labelledby="ls-red-titulo">
+      <div class="ls-rejilla" aria-hidden="true"></div>
+      <div class="ls-contenedor">
+        <div class="ls-cabecera">
+          <div>
+            <p class="ls-eyebrow">La red, ahora mismo</p>
+            <h2 class="ls-titulo" id="ls-red-titulo">Lo que la API sabe de la red, contado en grande.</h2>
+          </div>
+          <span class="ls-pastilla ls-pastilla--vivo">En vivo</span>
+        </div>
+
+        <div class="ls-bento">
+          <article class="ls-tarjeta ls-dato ls-dato--principal">
+            <span class="ls-dato__origen">GET /api/red</span>
+            <svg class="ls-marca-agua" aria-hidden="true"><use href="#logo-grafo"/></svg>
+            <span class="ls-cifra">7</span>
+            <span class="ls-etiqueta">puntos en la red</span>
+          </article>
+          <article class="ls-tarjeta ls-dato">
+            <span class="ls-dato__origen">conexiones</span>
+            <span class="ls-cifra">10</span>
+            <span class="ls-etiqueta">trayectos activos</span>
+          </article>
+          <article class="ls-tarjeta ls-dato">
+            <span class="ls-dato__origen">costo medio</span>
+            <span class="ls-cifra">12,2<small>min</small></span>
+            <span class="ls-etiqueta">promedio por trayecto</span>
+          </article>
+
+          <article class="ls-tarjeta ls-distribucion">
+            <div class="ls-distribucion__cabecera">
+              Distribución por tipo de punto
+              <span class="ls-codigo">7 puntos · 1 : 3 : 3</span>
+            </div>
+            <div class="ls-barra" role="img" aria-label="1 bodega, 3 barrios y 3 puntos de recogida">
+              <i class="ls-bodega"></i><i class="ls-barrio"></i><i class="ls-recogida"></i>
+            </div>
+            <ul class="ls-leyenda">
+              <li><span class="ls-punto ls-punto--bodega"></span>1 bodega <code>BOD-*</code></li>
+              <li><span class="ls-punto ls-punto--barrio"></span>3 barrios <code>BAR-*</code></li>
+              <li><span class="ls-punto ls-punto--recogida"></span>3 puntos de recogida <code>PR-*</code></li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- S2 · Antes y después -->
+    <section class="ls-seccion" aria-labelledby="ls-comparacion-titulo">
+      <div class="ls-contenedor">
+        <p class="ls-eyebrow">Antes y después</p>
+        <h2 class="ls-titulo" id="ls-comparacion-titulo">El mismo encargo, la mitad del tiempo.</h2>
+        <p class="ls-texto">De la bodega del centro al barrio oriente. Hoy el trayecto directo está cerrado: quien planea a ojo da la vuelta larga; RutaPyme lee la red y encuentra el camino corto.</p>
+
+        <div class="ls-comparacion">
+          <article class="ls-tarjeta ls-recorrido ls-recorrido--ojo">
+            <h3 class="ls-recorrido__titulo">“A ojo”</h3>
+            <p class="ls-recorrido__subtitulo">La ruta que alguien trazaría sin datos</p>
+            <div class="ls-aviso ls-aviso--cerrado">
+              <span class="ls-codigo">BOD-CENTRO</span><span class="ls-trazo"></span>✕<span class="ls-trazo"></span><span class="ls-codigo">BAR-ORIENTE</span>
+              <span>cerrado</span>
+            </div>
+            <ol class="ls-tramos">
+              <li><span class="ls-chip"><span class="ls-punto ls-punto--bodega"></span>BOD-CENTRO <small>bodega</small></span></li>
+              <li class="ls-costo-tramo">12 min</li>
+              <li><span class="ls-chip"><span class="ls-punto ls-punto--barrio"></span>BAR-NORTE <small>barrio</small></span></li>
+              <li class="ls-costo-tramo">7 min</li>
+              <li><span class="ls-chip"><span class="ls-punto ls-punto--recogida"></span>PR-PARQUE <small>recogida</small></span></li>
+              <li class="ls-costo-tramo">9 min</li>
+              <li><span class="ls-chip"><span class="ls-punto ls-punto--barrio"></span>BAR-ORIENTE <small>barrio</small></span></li>
+            </ol>
+            <div class="ls-comparador" aria-hidden="true">
+              <div><span>a ojo</span><span>28 min</span></div>
+              <span class="ls-comparador__pista"><i style="width:100%"></i></span>
+            </div>
+            <div class="ls-total">
+              <span>3 tramos · desvío por el norte</span>
+              <span class="ls-cifra">28<small>min</small></span>
+            </div>
+          </article>
+
+          <article class="ls-tarjeta ls-recorrido ls-recorrido--rutapyme">
+            <h3 class="ls-recorrido__titulo">Con RutaPyme</h3>
+            <p class="ls-recorrido__subtitulo">La ruta calculada con la red en vivo</p>
+            <div class="ls-aviso ls-aviso--exito">✓ Evita el tramo cerrado: va por el sur</div>
+            <ol class="ls-tramos">
+              <li><span class="ls-chip"><span class="ls-punto ls-punto--bodega"></span>BOD-CENTRO <small>bodega</small></span></li>
+              <li class="ls-costo-tramo">8 min</li>
+              <li><span class="ls-chip"><span class="ls-punto ls-punto--barrio"></span>BAR-SUR <small>barrio</small></span></li>
+              <li class="ls-costo-tramo">6 min</li>
+              <li><span class="ls-chip"><span class="ls-punto ls-punto--barrio"></span>BAR-ORIENTE <small>barrio</small></span></li>
+            </ol>
+            <div class="ls-comparador" aria-hidden="true">
+              <div><span>RutaPyme</span><span>14 min</span></div>
+              <span class="ls-comparador__pista"><i style="width:50%"></i></span>
+            </div>
+            <div class="ls-total">
+              <span>2 tramos · por el sur</span>
+              <span class="ls-cifra">14<small>min</small></span>
+            </div>
+          </article>
+        </div>
+
+        <div class="ls-ahorro">
+          <span class="ls-ahorro__pastilla">Ahorro: 14 min · 50 %</span>
+          <p>Cada tramo se valida contra GET /api/conexiones; si falta, se marca como cerrado.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- S3 · Cierre y pie de página -->
+    <section class="ls-seccion ls-cierre" aria-labelledby="ls-cierre-titulo">
+      <div class="ls-contenedor">
+        <p class="ls-eyebrow">Empieza ahora</p>
+        <h2 class="ls-titulo" id="ls-cierre-titulo">Planea con datos, no a ojo.</h2>
+        <p class="ls-texto">Abre la interfaz, carga la red de ejemplo y pídele a RutaPyme el camino más corto entre dos puntos.</p>
+        <div class="ls-botones">
+          <a class="ls-boton ls-boton--primario" href="http://127.0.0.1:8000">Abrir la interfaz →</a>
+          <a class="ls-boton" href="https://github.com/bblueside/RutaPyme">Ver el repositorio</a>
+        </div>
+
+        <footer class="ls-pie">
+          <div class="ls-pie__columnas">
+            <div>
+              <div class="ls-pie__marca"><svg class="ls-logo" aria-hidden="true"><use href="#logo-grafo"/></svg>RutaPyme</div>
+              <p>Rutas de reparto para pequeñas empresas, calculadas sobre un grafo propio.</p>
+            </div>
+            <nav aria-label="Enlaces">
+              <h3>Enlaces</h3>
+              <ul>
+                <li><a href="https://github.com/bblueside/RutaPyme">Repositorio</a></li>
+                <li><a href="https://github.com/bblueside/RutaPyme/tree/main/docs">Documentación</a></li>
+                <li><a href="http://127.0.0.1:8000">Interfaz</a></li>
+              </ul>
+            </nav>
+            <div>
+              <h3>Materia</h3>
+              <ul>
+                <li>Matemáticas para informática</li>
+                <li>Trabajo integrador</li>
+                <li>ITM · 2026</li>
+              </ul>
+            </div>
+          </div>
+          <div class="ls-aviso-datos">
+            <span>Todos los datos de esta página son sintéticos. Ningún punto, ruta o persona es real.</span>
+            <code>Python 3.12 · http.server · HTML + CSS + JS</code>
+          </div>
+        </footer>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="rejilla.js" defer></script>
+  <script src="scrub-engine.js"></script>
+  <script>
+    // La interfaz real la sirve el backend (python -m backend.api) en este puerto.
+    const URL_INTERFAZ = 'http://127.0.0.1:8000';
+
+    // Assets optimizados por scroll-assets/blueprint/optimizar_upscale.py (plan: docs/landing/plan-assets-upscale.md).
+    // El motor elige la variante de cada clip según el equipo: AV1 1080p, H.264 720p o sus versiones móviles.
+    const VERSION_ASSETS = 'v2';
+    const poster = n => ({ base: `escenas/opt/${n}.${VERSION_ASSETS}`, anchos: [1280, 1920, 2560] });
+    const clip = n => ({
+      av1: `videos/1080/${n}.${VERSION_ASSETS}.av1.mp4`,
+      h264: `videos/720/${n}.${VERSION_ASSETS}.h264.mp4`,
+      movilAv1: `videos/720/${n}.${VERSION_ASSETS}.movil.av1.mp4`,
+      movilH264: `videos/720/${n}.${VERSION_ASSETS}.movil.h264.mp4`,
+    });
+
+    mountScrollWorld(document.getElementById('mundo'), {
+      brand: { name: 'RutaPyme', href: '#inicio', logo: 'assets/logo_white.png' },
+      cta: { label: 'Probar el optimizador', href: URL_INTERFAZ },
+      hint: 'desplázate y mira cómo optimizamos tu ruta',
+      diveScroll: 1.3,
+      connScroll: 0.9,
+      sections: [
+        {
+          id: 'bodega', label: 'Bodega',
+          still: poster('escena_1'),
+          clip: clip('escena_1'),
+          eyebrow: 'Optimización de rutas para pymes',
+          title: 'Cada kilómetro de más es plata que se va.',
+          body: 'Los pedidos salen "a ojo" y las rutas se improvisan. Con RutaPyme, tu bodega deja de adivinar y empieza a calcular.',
+        },
+        {
+          id: 'modelo', label: 'Modelo',
+          still: poster('escena_2'),
+          clip: clip('escena_2'),
+          scroll: 1.5, linger: 0.35,
+          eyebrow: 'Del instinto a los grafos',
+          title: 'Tu operación, convertida en un grafo.',
+          body: 'Modelamos bodegas, clientes y calles como una red matemática y la consultamos al instante por API. Sin hojas de cálculo ni suposiciones.',
+        },
+        {
+          id: 'red', label: 'Red',
+          still: poster('escena_3'),
+          clip: clip('escena_3'),
+          scroll: 1.5, linger: 0.35,
+          eyebrow: 'Nodos, aristas y costos',
+          title: 'Cada punto es un nodo. Cada calle, una arista con costo.',
+          body: 'Calles cerradas, vías de un solo sentido y distancias reales entran al modelo. Los trayectos bloqueados salen del cálculo antes de que te cuesten un viaje perdido.',
+        },
+        {
+          id: 'ruta', label: 'Ruta',
+          still: poster('escena_4'),
+          clip: clip('escena_4'),
+          scroll: 1.7, linger: 0.4,
+          eyebrow: 'Alcance y ruta óptima',
+          title: 'Sabe hasta dónde llegas y por dónde te sale más barato.',
+          body: 'Desde cualquier bodega, RutaPyme calcula todos los destinos alcanzables y traza la ruta de menor costo. Más entregas por jornada con el mismo vehículo.',
+          cta: { primary: { label: 'Optimizar mi primera ruta', href: URL_INTERFAZ },
+                 secondary: { label: 'Volver al inicio', href: '#inicio' } },
+        },
+      ],
+      // escena_1 es el conector de prueba 1→2 y entrada_2 arranca en su último fotograma real:
+      // no hace falta conector aéreo entre ellas (null = fundido directo).
+      connectors: [null, clip('conector_2_3'), clip('conector_3_4')],
+    });
+  </script>
+</body>
+</html>
