@@ -25,6 +25,23 @@ Código: [`frontend/landing/`](../../frontend/landing/).
 | 10 | Verificación de costuras | Claude Code · QA | Capturas de pantalla antes y después de cada costura en el panel del navegador | **Rechazada.** El panel ejecuta `requestAnimationFrame` a 3 fps y las capturas salían reducidas; no servían para juzgar | Reemplazada por medición de píxeles entre el último y el primer fotograma de los clips finales: 3,5 · 2,6 · 4,8 · 6,9 · 3,9 /255 |
 | 11 | Fluidez y tiempo de carga | Claude Code · diagnóstico | Causas: descarga completa de cada clip antes de verse, descargas en paralelo, seguimiento del scroll al 18 % por fotograma, `linger` que acelera cerca de las costuras, `-g 8`, recodificación intermedia `mp4v`. Mejoras: seguir el scroll más rápido, bajar `linger`, cargar en orden, `-g 2` con `crf 23`, o secuencia de imágenes en `<canvas>` | **Pendiente.** Solo diagnóstico; no se aplicó ningún cambio. Primero se probará en Chrome normal, fuera del panel | — |
 
+## Encabezado que cambia de color según el scroll (2026-10-27)
+
+Plan: `plan-transicion-header.md` (decisiones Q1 a Q14). Código: `frontend/src/components/header/Header.*`,
+`frontend/src/hooks/useZonaLanding.ts`, `frontend/src/App.tsx`, `frontend/src/components/landing/InfoSections.*`.
+
+| # | Decisión o pieza | Herramienta / objetivo de IA | Propuesta recibida | Acepté o rechacé y por qué | Cómo la verifiqué |
+|---|------------------|------------------------------|--------------------|----------------------------|-------------------|
+| 12 | Forma de la transición | Claude Code · diseño del componente | Un solo `Header` con prop `variant` (`dark`/`light`), colores en variables CSS y transición de 300 ms; `HeaderLight` queda intacto para otras funciones | **Aceptada.** Evita dos encabezados que se desincronicen y deja evolucionar cada modo por separado | `npm run build` y `npm run lint` sin errores |
+| 13 | Cambio de logo | Claude Code · diseño del componente | Dos `<img>` superpuestos (blanco y negro) con fundido de opacidad | **Aceptada.** Cambiar el `src` produciría un parpadeo y no permitiría fundido | Capturas de ambos modos: [oscuro](capturas-header/modo-oscuro.jpg), [claro](capturas-header/modo-claro.jpg) |
+| 14 | Punto de cambio y estado activo | Claude Code · hook `useZonaLanding` | `IntersectionObserver` sobre una franja de 1 px bajo la barra; devuelve `modo` e `indiceInfo` | **Aceptada con ajuste.** En el borde entre `Cifras` y `Comparación` ambas tocan la franja y se activaba la primera; ahora gana la de abajo (`findLastIndex`). El alto de la barra se mide y se publica como `--site-header-height` | En el navegador: al bajar pasa a claro, al subir vuelve a oscuro, `Cifras` y `Comparación` navegan y quedan resaltadas, y dentro del cierre ningún ítem queda activo |
+| 15 | Ítems nuevos del nav | Claude Code · integración | `INFO_NAV_SECTIONS` exportado desde `InfoSections.tsx` | **Aceptada con una excepción de lint.** `react-refresh/only-export-components` no admite la exportación; se silenció en esa línea porque el plan fija la ubicación | `npm run lint` limpio |
+| 16 | Movimiento reducido | Claude Code · accesibilidad | Transiciones a `0s` con `prefers-reduced-motion` y `scrollIntoView` con `behavior: 'auto'` | **Aceptada.** Coherente con el motor, `InfoSections` y `LandingClosing` | **No verificada en el navegador** (no se emuló el movimiento reducido); solo revisión del código |
+
+Limitación de la prueba: el panel del navegador tiene ancho móvil (nav oculto por debajo de 860 px), así que los
+ítems se probaron por código (`click()`), no con el ratón. El supuesto de que dentro de `LandingClosing` la barra
+sigue clara sin ítem activo quedó implementado y verificado, pero sigue pendiente de confirmar con el equipo.
+
 ## Costo
 
 ≈ $6,3 en la API de Gemini: 2 imágenes y 6 videos (incluido el conector descartado de la fila 6), dentro de los
