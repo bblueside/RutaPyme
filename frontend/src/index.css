@@ -1,0 +1,180 @@
+/* Estilos globales de la landing: tema blueprint del motor y piezas compartidas por las secciones. */
+
+/* Tema blueprint aprobado: fondo y línea idénticos a los de las escenas generadas. */
+:root,
+.sw-root {
+  --sw-bg: #0146C1;
+  --sw-ink: #E3E5FC;
+  --sw-ink-soft: #B9C2F0;
+  --sw-accent: #E3E5FC;
+  --sw-font-display: "Inter Tight", system-ui, sans-serif;
+  --sw-font-body: "Manrope", system-ui, sans-serif;
+}
+
+html,
+body {
+  margin: 0;
+  background: #0146C1;
+}
+
+/* El motor rellena los botones principales con --sw-ink (claro): el texto va en azul. */
+.sw-btn--primary,
+.sw-topcta { color: #0146C1; }
+
+/* Copys un poco más pequeños que los del motor (el prefijo html body gana por especificidad). */
+html body .sw-copy__eyebrow { font-size: .72rem; }
+html body .sw-copy__title { font-size: clamp(1.7rem, 3.7vw, 3rem); }
+html body .sw-copy__body { font-size: clamp(.9rem, 1.1vw, 1rem); margin: 10px 0 0; }
+html body .sw-copy__cta { margin-top: 14px; }
+@media (max-width: 768px) {
+  html body .sw-copy__title { font-size: clamp(1.6rem, 6.3vw, 2.3rem); }
+  html body .sw-copy__body { font-size: clamp(.88rem, 3.2vw, .98rem); }
+}
+
+/* ---------- Secciones bajo el recorrido ---------- */
+
+.landing-sections {
+  /* Marca */
+  --ls-bg:            #F6F7FE;
+  --ls-bg-deep:       #E3E5FC;
+  --ls-ink:           #0B1640;
+  --ls-ink-soft:      #4C5680;
+  --ls-accent:        #0146C1;
+  --ls-accent-soft:   rgb(1 70 193 / 0.08);
+  --ls-on-accent:     #FFFFFF;
+  /* Superficies */
+  --ls-surface:       #FFFFFF;
+  --ls-surface-2:     #EEF0FE;
+  --ls-border:        rgb(1 70 193 / 0.12);
+  --ls-border-strong: rgb(1 70 193 / 0.28);
+  /* Estados y tipos de punto (los mismos de la interfaz) */
+  --ls-success:       #16A34A;
+  --ls-closed:        #DC2626;
+  --ls-warehouse:     #E4572E;
+  --ls-neighborhood:  #2E86AB;
+  --ls-pickup:        #3BB273;
+  /* Tipografía */
+  --ls-font-title: "Inter Tight", system-ui, sans-serif;
+  --ls-font-text:  "Manrope", system-ui, sans-serif;
+  --ls-font-code:  ui-monospace, "Cascadia Code", Consolas, monospace;
+  /* Forma */
+  --ls-radius:    20px;
+  --ls-radius-sm: 12px;
+  --ls-shadow:    0 1px 2px rgb(11 22 64 / 0.04), 0 18px 36px -24px rgb(1 70 193 / 0.25);
+
+  /* Por encima de todas las capas fijas del recorrido (la más alta es .sw-scrollbar, 60). */
+  position: relative;
+  z-index: 70;
+  background: var(--ls-bg);
+  color: var(--ls-ink);
+  font-family: var(--ls-font-text);
+  font-size: clamp(1rem, 1.2vw, 1.1rem);
+  line-height: 1.6;
+}
+
+.landing-sections *,
+.landing-sections *::before,
+.landing-sections *::after { box-sizing: border-box; }
+
+.landing-sections :focus-visible {
+  outline: 2px solid var(--ls-accent);
+  outline-offset: 3px;
+}
+
+.ls-container {
+  width: min(100% - 32px, 1040px);
+  margin-inline: auto;
+}
+
+.ls-section { padding-block: clamp(56px, 9vw, 104px); }
+.ls-section + .ls-section { border-top: 1px solid var(--ls-border); }
+
+.ls-eyebrow {
+  margin: 0 0 12px;
+  font: 700 .78rem/1 var(--ls-font-title);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ls-accent);
+}
+
+.ls-title {
+  margin: 0;
+  font: 700 clamp(1.9rem, 4vw, 3rem)/1.05 var(--ls-font-title);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--ls-ink);
+}
+
+.ls-text {
+  margin: 14px 0 0;
+  max-width: 60ch;
+  color: var(--ls-ink-soft);
+}
+
+.ls-figure {
+  font: 700 clamp(2.75rem, 6vw, 4.5rem)/1 var(--ls-font-title);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ls-accent);
+}
+.ls-figure small {
+  margin-left: 6px;
+  font-size: .32em;
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--ls-ink-soft);
+}
+
+.ls-code {
+  font-family: var(--ls-font-code);
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+.ls-card {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(18px, 2.4vw, 28px);
+  background: var(--ls-surface);
+  border: 1px solid var(--ls-border);
+  border-radius: var(--ls-radius);
+  box-shadow: var(--ls-shadow);
+}
+
+.ls-logo {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--ls-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Ruta /app (panel aún sin migrar) ---------- */
+
+.under-construction {
+  display: grid;
+  place-content: center;
+  gap: 16px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 16px;
+  text-align: center;
+  color: #E3E5FC;
+  font-family: "Manrope", system-ui, sans-serif;
+}
+.under-construction h1 {
+  margin: 0;
+  font: 700 clamp(1.8rem, 5vw, 3rem)/1.1 "Inter Tight", system-ui, sans-serif;
+}
+.under-construction p { margin: 0; color: #B9C2F0; }
+.under-construction a {
+  justify-self: center;
+  padding: 12px 22px;
+  border-radius: 999px;
+  background: #E3E5FC;
+  color: #0146C1;
+  font-weight: 600;
+  text-decoration: none;
+}

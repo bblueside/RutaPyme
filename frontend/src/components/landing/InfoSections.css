@@ -1,0 +1,312 @@
+/* InfoSections: S1 cifras (con rejilla interactiva) y S2 antes y después.
+   Diseño de referencia: designs/landing-secciones-v3.png */
+
+.ls-label {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--ls-ink-soft);
+}
+
+.ls-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--ls-border);
+  border-radius: 999px;
+  background: var(--ls-surface);
+  font: 600 .82rem/1 var(--ls-font-text);
+  color: var(--ls-ink);
+}
+.ls-pill--sample::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ls-accent);
+}
+
+/* ---------- S1 · Cifras ---------- */
+
+.ls-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: clamp(24px, 4vw, 40px);
+}
+
+.ls-bento {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 16px;
+}
+
+.ls-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 190px;
+}
+.ls-stat--main { min-height: 230px; }
+.ls-stat__source {
+  position: absolute;
+  top: 18px;
+  left: 22px;
+  font: 500 .74rem/1 var(--ls-font-code);
+  color: var(--ls-ink-soft);
+}
+
+.ls-watermark {
+  position: absolute;
+  right: 22px;
+  top: 50%;
+  width: clamp(110px, 16vw, 170px);
+  transform: translateY(-50%);
+  fill: none;
+  stroke: var(--ls-accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: .1;
+}
+
+.ls-distribution { grid-column: 1 / -1; }
+.ls-distribution__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 700;
+}
+.ls-distribution__header span { font-weight: 500; color: var(--ls-ink-soft); }
+
+.ls-bar {
+  display: flex;
+  height: 8px;
+  margin: 14px 0 16px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ls-surface-2);
+}
+.ls-bar i { display: block; height: 100%; }
+.ls-bar__warehouse    { background: var(--ls-warehouse); }
+.ls-bar__neighborhood { background: var(--ls-neighborhood); }
+.ls-bar__pickup       { background: var(--ls-pickup); }
+
+.ls-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: .9rem;
+}
+.ls-legend li { display: inline-flex; align-items: center; gap: 8px; }
+.ls-legend code { font-size: .75rem; color: var(--ls-ink-soft); }
+.ls-legend .ls-dot { width: 9px; height: 9px; }
+
+.ls-dot {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.ls-dot--warehouse    { background: var(--ls-warehouse); }
+.ls-dot--neighborhood { background: var(--ls-neighborhood); }
+.ls-dot--pickup       { background: var(--ls-pickup); }
+
+/* ---------- S2 · Antes y después ---------- */
+
+.ls-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: clamp(24px, 4vw, 40px);
+}
+
+.ls-route { display: flex; flex-direction: column; gap: 14px; }
+.ls-route--guess { background: rgb(255 255 255 / 0.6); box-shadow: none; }
+.ls-route--rutapyme {
+  border-color: var(--ls-border-strong);
+  box-shadow: 0 0 0 1px var(--ls-accent-soft), 0 20px 44px -24px rgb(1 70 193 / 0.45);
+}
+
+.ls-route__title {
+  margin: 0;
+  font: 700 .78rem/1 var(--ls-font-title);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ls-ink-soft);
+}
+.ls-route--rutapyme .ls-route__title { color: var(--ls-accent); }
+.ls-route__subtitle { margin: -6px 0 0; font-weight: 600; }
+
+.ls-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--ls-radius-sm);
+  font-size: .85rem;
+  font-weight: 600;
+}
+.ls-notice--closed {
+  flex-wrap: wrap;
+  background: rgb(220 38 38 / 0.08);
+  border: 1px solid rgb(220 38 38 / 0.25);
+  color: var(--ls-closed);
+}
+.ls-notice--closed .ls-code { white-space: nowrap; }
+.ls-notice--closed .ls-dash {
+  flex: 1;
+  min-width: 24px;
+  height: 0;
+  border-top: 2px dashed currentColor;
+}
+.ls-notice--success {
+  background: rgb(22 163 74 / 0.08);
+  border: 1px solid rgb(22 163 74 / 0.25);
+  color: #166534;
+}
+
+.ls-legs {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ls-legs li { display: flex; align-items: center; gap: 10px; }
+
+.ls-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--ls-border);
+  border-radius: var(--ls-radius-sm);
+  background: var(--ls-surface-2);
+  font-family: var(--ls-font-code);
+  font-size: .85rem;
+  font-weight: 600;
+}
+.ls-chip small {
+  font-family: var(--ls-font-text);
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--ls-ink-soft);
+}
+
+.ls-leg-cost {
+  margin: 4px 0 4px 18px;
+  padding-left: 14px;
+  border-left: 2px solid var(--ls-border-strong);
+  font: 500 .8rem/1.8 var(--ls-font-code);
+  color: var(--ls-ink-soft);
+}
+.ls-route--guess .ls-leg-cost { border-left-style: dashed; }
+
+.ls-meter { display: grid; gap: 6px; margin-top: auto; font-size: .78rem; font-family: var(--ls-font-code); }
+.ls-meter div { display: flex; justify-content: space-between; }
+.ls-meter__track {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ls-surface-2);
+  overflow: hidden;
+}
+.ls-meter__track i { display: block; height: 100%; border-radius: inherit; background: var(--ls-ink-soft); opacity: .45; }
+.ls-route--rutapyme .ls-meter__track i { background: var(--ls-accent); opacity: 1; }
+
+.ls-total {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--ls-border);
+  font-size: .85rem;
+  color: var(--ls-ink-soft);
+}
+.ls-total .ls-figure { font-size: clamp(2rem, 4vw, 2.75rem); }
+.ls-route--guess .ls-total .ls-figure { color: var(--ls-ink-soft); }
+
+.ls-savings { margin-top: 28px; text-align: center; }
+.ls-savings__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: var(--ls-accent);
+  color: var(--ls-on-accent);
+  font: 700 1rem/1 var(--ls-font-title);
+}
+.ls-savings p { margin: 12px 0 0; font-size: .85rem; color: var(--ls-ink-soft); }
+
+/* ---------- Rejilla interactiva (S1) ---------- */
+
+/* Al navegar desde el encabezado, la sección queda justo debajo de la barra (alto medido por useZonaLanding). */
+.ls-section--grid { scroll-margin-top: var(--site-header-height, 64px); position: relative; overflow: hidden; isolation: isolate; }
+.ls-section--grid > .ls-container { position: relative; z-index: 1; }
+
+.ls-grid {
+  --ls-cell: 44px;
+  --ls-mx: 50%;
+  --ls-my: 50%;
+  --ls-focus: 0;            /* 0 = cursor fuera, 1 = dentro (useInteractiveGrid lo suaviza) */
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Sin cursor la rejilla se desvanece hacia los bordes de la sección. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+          mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+}
+
+/* Capa base: líneas muy tenues y siempre visibles. */
+.ls-grid::before,
+.ls-grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right,  var(--ls-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ls-line) 1px, transparent 1px);
+  background-size: var(--ls-cell) var(--ls-cell);
+}
+.ls-grid::before { --ls-line: rgb(1 70 193 / 0.05); }
+
+/* Capa de foco: las mismas líneas, más marcadas, visibles solo cerca del cursor. */
+.ls-grid::after {
+  --ls-line: rgb(1 70 193 / 0.45);
+  opacity: var(--ls-focus);
+  -webkit-mask-image: radial-gradient(circle 190px at var(--ls-mx) var(--ls-my), #000, transparent 100%);
+          mask-image: radial-gradient(circle 190px at var(--ls-mx) var(--ls-my), #000, transparent 100%);
+}
+
+/* Resplandor azul alrededor del cursor. */
+.ls-grid__focus {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: var(--ls-focus);
+  background: radial-gradient(circle 280px at var(--ls-mx) var(--ls-my), rgb(1 70 193 / 0.2), rgb(1 70 193 / 0.07) 55%, transparent 100%);
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .ls-bento { grid-template-columns: 1fr 1fr; }
+  .ls-stat--main { grid-column: 1 / -1; }
+}
+
+@media (max-width: 720px) {
+  .ls-bento { grid-template-columns: 1fr; }
+  .ls-stat, .ls-stat--main { min-height: 160px; }
+  .ls-comparison { grid-template-columns: 1fr; }
+}

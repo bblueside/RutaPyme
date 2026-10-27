@@ -1,0 +1,84 @@
+/* Encabezado sticky variante clara (secciones S1 y S2). Misma estructura y opacidad que Header.css; solo cambian los colores.
+   El contenedor mide 0 de alto para no desplazar el recorrido (que mide el scroll desde 0);
+   la barra se dibuja encima y queda por encima de las secciones informativas (z-index 70). */
+.site-header-light {
+  --hl-bg: 227 229 252;
+  --hl-ink: #0146C1;
+  --hl-ink-soft: rgb(1 70 193 / 0.72);
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  height: 0;
+}
+
+.site-header-light__bar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: clamp(10px, 1.6vw, 16px) clamp(18px, 5vw, 64px);
+  background: rgb(var(--hl-bg) / 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgb(1 70 193 / 0.14);
+  font-family: var(--sw-font-body);
+}
+
+.site-header-light__brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.site-header-light__logo {
+  display: block;
+  height: 34px;
+  width: auto;
+}
+
+.site-header-light__nav {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  background: rgb(1 70 193 / 0.08);
+  border: 1px solid rgb(1 70 193 / 0.16);
+  border-radius: 999px;
+}
+
+.site-header-light__item {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--hl-ink-soft);
+  font: 600 .82rem var(--sw-font-body);
+  cursor: pointer;
+  transition: color .25s, background .25s;
+}
+.site-header-light__item:hover { color: var(--hl-ink); }
+.site-header-light__item.is-active {
+  background: var(--hl-ink);
+  color: rgb(var(--hl-bg));
+}
+
+.site-header-light__cta {
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--hl-ink);
+  color: rgb(var(--hl-bg));
+  font-weight: 600;
+  font-size: .9rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-header-light :focus-visible {
+  outline: 2px solid var(--hl-ink);
+  outline-offset: 3px;
+}
+
+@media (max-width: 860px) {
+  .site-header-light__nav { display: none; }
+}
