@@ -5,10 +5,13 @@ cada punto guarda un diccionario con sus salidas {destino: costo}.
 
 Este módulo no sabe nada de HTTP: solo guarda la red y aplica las reglas del dominio
 descritas en docs/feature-1/especificacion.md (reglas R-01 a R-07).
+La cobertura de entregas (Feature 2) es un recorrido por capas (BFS) propio, descrito en
+docs/feature-2/especificacion.md (reglas R-09 a R-14).
 """
 
 import math
 import re
+from collections import deque
 
 TIPOS_PUNTO = ("bodega", "barrio", "punto_recogida")
 PATRON_ID = re.compile(r"[A-Za-z0-9_-]{1,30}")
@@ -44,6 +47,10 @@ class PuntoDuplicado(ErrorRed):
 
 class ConexionDuplicada(ErrorRed):
     codigo = "conexion_duplicada"
+
+
+class RedVacia(ErrorRed):
+    codigo = "red_vacia"
 
 
 # ---------------------------------------------------------------------------
@@ -209,8 +216,185 @@ class RedOperativa:
             "texto": texto,
         }
 
+    # --- Cobertura de entregas (Feature 2) --------------------------------
+
+    def cobertura(self, origen):
+        """R-09 a R-13: puntos alcanzables desde `origen` siguiendo el sentido de los trayectos."""
+        origen = normalizar_id(origen, "origen")
+        self._exigir_red_con_puntos()
+        self._exigir_punto(origen, "El punto de origen")
+
+        recorrido = self._recorrer_por_capas(origen)
+        capa = recorrido["capa"]
+        con_entrada = self._puntos_con_entrada()
+
+        alcanzables = [
+            {"id": punto, "tipo": self._tipos[punto], "saltos": capa[punto],
+             "llega_desde": recorrido["llega_desde"][punto]}
+            for punto in recorrido["orden_visita"][1:]
+        ]
+        no_alcanzables = [
+            {"id": punto, "tipo": tipo,
+             "motivo": ("no tiene trayectos de entrada" if punto not in con_entrada
+                        else f"sus trayectos de entrada vienen de puntos que {origen} no alcanza")}
+            for punto, tipo in self._tipos.items() if punto not in capa
+        ]
+
+        if not self._adyacencia[origen]:
+            mensaje = f"{origen} no tiene trayectos de salida registrados: no puede cubrir ningún otro punto."
+        else:
+            mensaje = (f"Desde {origen} se pueden cubrir {len(alcanzables)} de "
+                       f"{self.cantidad_puntos() - 1} puntos de la red.")
+
+        return {
+            "origen": {"id": origen, "tipo": self._tipos[origen]},
+            "algoritmo": "recorrido por capas (BFS) propio sobre la lista de adyacencia",
+            "mensaje": mensaje,
+            "total_alcanzables": len(alcanzables),
+            "alcanzables": alcanzables,
+            "total_no_alcanzables": len(no_alcanzables),
+            "no_alcanzables": no_alcanzables,
+            "capas": recorrido["capas"],
+            "orden_visita": recorrido["orden_visita"],
+            "traza": recorrido["traza"],
+        }
+
+    def verificar_cobertura(self, origen, destino):
+        """R-09 a R-14: ¿se puede llegar de `origen` a `destino`? Si no, explica por qué."""
+        origen = normalizar_id(origen, "origen")
+        destino = normalizar_id(destino, "destino")
+        self._exigir_red_con_puntos()
+        self._exigir_punto(origen, "El punto de origen")
+        self._exigir_punto(destino, "El punto de destino")
+
+        recorrido = self._recorrer_por_capas(origen)
+        respuesta = {
+            "origen": {"id": origen, "tipo": self._tipos[origen]},
+            "destino": {"id": destino, "tipo": self._tipos[destino]},
+            "algoritmo": "recorrido por capas (BFS) propio sobre la lista de adyacencia",
+        }
+
+        if destino in recorrido["capa"]:
+            camino = self._reconstruir_camino(recorrido["llega_desde"], destino)
+            saltos = len(camino) - 1
+            if saltos == 0:
+                mensaje = f"{destino} es el mismo punto de origen: está cubierto sin hacer ningún trayecto."
+            else:
+                mensaje = (f"Sí: {destino} es alcanzable desde {origen} en {saltos} "
+                           f"{'trayecto' if saltos == 1 else 'trayectos'}.")
+            respuesta.update({
+                "alcanzable": True,
+                "mensaje": mensaje,
+                "saltos": saltos,
+                "camino": camino,
+                "nota": ("El camino es la evidencia de cobertura con menos trayectos (capas del BFS). "
+                         "No es necesariamente el de menor costo: eso es la Feature 3."),
+            })
+        else:
+            respuesta.update({
+                "alcanzable": False,
+                "mensaje": f"No: {destino} no es alcanzable desde {origen}.",
+                "explicacion": self._explicar_no_alcanzable(origen, destino, recorrido["orden_visita"]),
+                "alcanzables_desde_origen": recorrido["orden_visita"][1:],
+            })
+
+        respuesta.update({
+            "orden_visita": recorrido["orden_visita"],
+            "traza": recorrido["traza"],
+        })
+        return respuesta
+
+    def _recorrer_por_capas(self, origen):
+        """Recorrido en anchura (BFS) propio. O(V + E) en tiempo y O(V) en memoria extra.
+
+        Un punto se marca como conocido al DESCUBRIRLO (al meterlo en la cola), no al visitarlo:
+        así nunca entra dos veces a la cola y los ciclos (A→B→A) no generan vueltas infinitas.
+        Los vecinos se revisan en el orden en que se registraron sus conexiones.
+        """
+        capa = {origen: 0}            # punto -> número de trayectos desde el origen
+        llega_desde = {origen: None}  # punto -> punto desde el que se descubrió (para reconstruir el camino)
+        cola = deque([origen])
+        orden_visita = []
+        capas = []
+        traza = []
+
+        while cola:
+            actual = cola.popleft()
+            orden_visita.append(actual)
+            if capa[actual] == len(capas):
+                capas.append([])
+            capas[capa[actual]].append(actual)
+
+            descubiertos, ya_conocidos = [], []
+            for vecino in self._adyacencia[actual]:   # O(grado(actual)) gracias a la lista de adyacencia
+                if vecino in capa:
+                    ya_conocidos.append(vecino)
+                else:
+                    capa[vecino] = capa[actual] + 1
+                    llega_desde[vecino] = actual
+                    cola.append(vecino)
+                    descubiertos.append(vecino)
+
+            traza.append({
+                "paso": len(traza) + 1,
+                "visita": actual,
+                "capa": capa[actual],
+                "descubre": descubiertos,
+                "ya_conocidos": ya_conocidos,
+                "cola": list(cola),
+                "decision": self._decision_de_paso(actual, descubiertos, ya_conocidos),
+            })
+
+        return {"capa": capa, "llega_desde": llega_desde, "orden_visita": orden_visita,
+                "capas": capas, "traza": traza}
+
+    @staticmethod
+    def _decision_de_paso(actual, descubiertos, ya_conocidos):
+        if not descubiertos and not ya_conocidos:
+            return f"{actual} no tiene salidas: no agrega puntos a la cola."
+        partes = []
+        if descubiertos:
+            partes.append(f"se agregan a la cola {', '.join(descubiertos)}")
+        if ya_conocidos:
+            partes.append(f"se ignoran {', '.join(ya_conocidos)} (ya conocidos)")
+        texto = "; ".join(partes)
+        return texto[0].upper() + texto[1:] + "."
+
+    @staticmethod
+    def _reconstruir_camino(llega_desde, destino):
+        """Sigue los predecesores desde el destino hasta el origen. O(longitud del camino)."""
+        camino = []
+        punto = destino
+        while punto is not None:
+            camino.append(punto)
+            punto = llega_desde[punto]
+        camino.reverse()
+        return camino
+
+    def _puntos_con_entrada(self):
+        """Puntos a los que llega al menos un trayecto. O(V + E)."""
+        return {destino for salidas in self._adyacencia.values() for destino in salidas}
+
+    def _explicar_no_alcanzable(self, origen, destino, alcanzados):
+        """Explicación legible de por qué el destino no se puede cubrir (R-12). O(V + E)."""
+        if not self._adyacencia[origen]:
+            return f"{origen} no tiene trayectos de salida registrados, así que no puede llegar a ningún punto."
+        entradas = [punto for punto, salidas in self._adyacencia.items() if destino in salidas]
+        if not entradas:
+            return (f"Ningún trayecto llega a {destino} (no tiene conexiones de entrada): "
+                    "no se puede alcanzar desde ningún punto de la red.")
+        cubiertos = ", ".join(alcanzados[1:]) or "ningún otro punto"
+        return (f"A {destino} solo llegan trayectos desde {', '.join(entradas)}, y ninguno de esos puntos "
+                f"es alcanzable desde {origen}. Desde {origen} solo se cubre: {cubiertos}. "
+                "Recuerde que la red es dirigida: A→B no permite B→A.")
+
     # --- Apoyo ------------------------------------------------------------
 
     def _exigir_punto(self, identificador, descripcion):
         if identificador not in self._tipos:
             raise PuntoInexistente(f"{descripcion} '{identificador}' no existe. Regístrelo primero.")
+
+    def _exigir_red_con_puntos(self):
+        if not self._tipos:
+            raise RedVacia("La red está vacía: registre puntos y conexiones (o cargue la red de ejemplo) "
+                           "antes de consultar la cobertura.")
