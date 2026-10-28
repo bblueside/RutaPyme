@@ -1,14 +1,18 @@
 // Composición de la aplicación: la landing en "/" y el acceso a la interfaz en "/app".
 import { useEffect, useRef, useState } from 'react'
-import { Link, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import Header from './components/header/Header'
 import ScrollWorld from './components/landing/ScrollWorld'
 import InfoSections, { INFO_NAV_SECTIONS } from './components/landing/InfoSections'
 import LandingClosing from './components/landing/LandingClosing'
 import { HOME_HREF, WORLD_CONFIG } from './components/landing/scrollWorldConfig'
 import type { ScrollWorldInstance } from './lib/scrub-engine.js'
-import { INTERFACE_ROUTE, TOP_ANCHOR } from './routes'
+import { INTERFACE_ROUTE, PANEL_ROUTES, TOP_ANCHOR } from './routes'
 import { useZonaLanding } from './hooks/useZonaLanding'
+import PanelLayout from './components/panel/layout/PanelLayout'
+import OverviewView from './components/panel/overview/OverviewView'
+import PointsView from './components/panel/points/PointsView'
+import CoverageView from './components/panel/coverage/CoverageView'
 
 const SECTIONS = [...WORLD_CONFIG.sections, ...INFO_NAV_SECTIONS]
 const WORLD_SECTION_COUNT = WORLD_CONFIG.sections.length
@@ -64,16 +68,12 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
-      <Route
-        path={INTERFACE_ROUTE}
-        element={
-          <main className="under-construction">
-            <h1>Panel en construcción</h1>
-            <p>La interfaz de RutaPyme todavía se está migrando a React.</p>
-            <Link to="/">← Volver a la landing</Link>
-          </main>
-        }
-      />
+      <Route path={INTERFACE_ROUTE} element={<PanelLayout />}>
+        <Route index element={<OverviewView />} />
+        <Route path={PANEL_ROUTES.points} element={<PointsView />} />
+        <Route path={PANEL_ROUTES.connections} element={<Navigate to={PANEL_ROUTES.points} replace />} />
+        <Route path={PANEL_ROUTES.coverage} element={<CoverageView />} />
+      </Route>
     </Routes>
   )
 }

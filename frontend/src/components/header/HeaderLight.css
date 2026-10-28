@@ -79,6 +79,47 @@
   outline-offset: 3px;
 }
 
+/* ---------- Variante del panel: rutas, acciones y barra secundaria ---------- */
+.site-header-light--panel .site-header-light__bar { background: #fff; border-bottom-color: #E2E5F0; row-gap: 8px; }
+/* Menú en cápsula: fondo claro, píldoras por ítem y acento azul en el activo. */
+.site-header-light--panel .site-header-light__nav,
+.site-header-light--panel .site-header-light__subnav {
+  background: #EEF1FE;
+  border: 1px solid rgb(1 70 193 / 0.14);
+  border-radius: 999px;
+  padding: 4px;
+}
+.site-header-light--panel .site-header-light__nav { margin-right: auto; margin-left: 16px; }
+.site-header-light--panel .site-header-light__item {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  font: 600 .875rem var(--sw-font-body);
+  color: #4A5688;
+  border-radius: 999px;
+  padding: 7px 16px;
+}
+.site-header-light--panel .site-header-light__item:hover { color: #0146C1; background: rgb(1 70 193 / 0.07); }
+.site-header-light--panel .site-header-light__item.is-active {
+  background: #fff;
+  color: #0146C1;
+  box-shadow: 0 0 0 1px rgb(1 70 193 / 0.28), 0 2px 6px rgb(1 70 193 / 0.14);
+}
+.site-header-light__actions { display: flex; align-items: center; gap: 8px; }
+.site-header-light__subnav { display: none; }
+
 @media (max-width: 860px) {
   .site-header-light__nav { display: none; }
+  .site-header-light--panel .site-header-light__bar { flex-wrap: wrap; }
+  .site-header-light--panel .site-header-light__actions { margin-left: auto; }
+  .site-header-light--panel .site-header-light__subnav {
+    order: 3;
+    flex: 1 0 100%;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .site-header-light--panel .site-header-light__subnav .site-header-light__item { min-height: 36px; padding: 0 14px; flex: none; }
+  .site-header-light--panel .site-header-light__subnav { border-radius: 999px; }
 }
