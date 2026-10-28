@@ -1,0 +1,37 @@
+/* Tokens de forma y espacio del panel (ver docs/frontend/plan-diseno.md, sección 3.1). */
+:root {
+  --panel-space-1: 4px;
+  --panel-space-2: 8px;
+  --panel-space-3: 12px;
+  --panel-space-4: 16px;
+  --panel-space-5: 24px;
+  --panel-space-6: 40px;
+
+  --panel-radius: 14px;
+  --panel-radius-sm: 8px;
+  --panel-radius-xs: 6px;
+  --panel-control-height: 36px;
+
+  --panel-border: #E2E5F0;
+  --panel-input: #D9DDEB;
+  --panel-muted: #F3F4FA;
+  --panel-shadow: 0 1px 2px rgb(11 22 64 / .05);
+  --panel-shadow-raised: 0 12px 32px rgb(11 22 64 / .18), 0 2px 6px rgb(11 22 64 / .08);
+
+  --panel-content-width: 1200px;
+  --panel-header-height: 66px;
+}
+
+@media (max-width: 1199px) {
+  :root { --panel-gap: var(--panel-space-3); }
+}
+@media (min-width: 1200px) {
+  :root { --panel-gap: var(--panel-space-4); }
+}
+@media (max-width: 859px) {
+  /* La barra de navegación secundaria suma una fila al encabezado. */
+  :root { --panel-header-height: 110px; }
+}
+@media (max-width: 639px) {
+  :root { --panel-control-height: 40px; }
+}
