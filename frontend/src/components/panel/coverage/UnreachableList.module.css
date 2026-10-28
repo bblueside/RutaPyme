@@ -1,0 +1,4 @@
+.list { margin: 0; padding: 0; list-style: none; }
+.row { display: flex; flex-direction: column; gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--panel-border); }
+.row:last-child { border-bottom: 0; }
+.reason { font-size: .82rem; color: var(--panel-ink-soft); overflow-wrap: anywhere; }

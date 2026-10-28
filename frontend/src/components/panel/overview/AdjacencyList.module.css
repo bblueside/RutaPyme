@@ -1,0 +1,7 @@
+.list { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; max-height: 520px; overflow-y: auto; }
+.line { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px var(--panel-space-2); padding: var(--panel-space-3) 0; border-bottom: 1px solid var(--panel-border); }
+.line:last-child { border-bottom: 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; align-self: center; }
+.id { white-space: nowrap; }
+.arrow { color: var(--panel-ink-soft); }
+.exits { font: 400 .82rem var(--panel-font-code); color: var(--panel-ink-soft); overflow-wrap: anywhere; }

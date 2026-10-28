@@ -1,0 +1,4 @@
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: var(--panel-space-3); margin: var(--panel-space-4) 0 0; }
+.tile { display: flex; flex-direction: column-reverse; gap: 2px; padding: var(--panel-space-3) var(--panel-space-4); border-radius: var(--panel-radius-sm); background: var(--panel-muted); min-width: 0; }
+.value { margin: 0; font: 700 1.5rem var(--panel-font-title); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.label { font-size: .8rem; color: var(--panel-ink-soft); }
