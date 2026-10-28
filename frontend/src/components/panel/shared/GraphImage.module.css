@@ -1,0 +1,19 @@
+.frame {
+  position: relative;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-surface);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius-sm);
+  overflow: hidden;
+}
+.image { display: none; max-width: 100%; height: auto; max-height: 640px; object-fit: contain; }
+.visible { display: block; }
+.skeleton { position: absolute; inset: 0; border-radius: 0; }
+.state { display: flex; flex-direction: column; align-items: center; gap: var(--panel-space-2); max-width: 440px; padding: var(--panel-space-5); text-align: center; }
+.iconCircle { display: inline-flex; padding: 12px; border-radius: 50%; background: var(--panel-warning-bg); color: var(--panel-warning); }
+.title { margin: 0; font: 600 1rem var(--panel-font-title); color: var(--panel-ink); }
+.message { margin: 0; font-size: .9rem; color: var(--panel-ink-soft); overflow-wrap: anywhere; }
+.code { font: 500 .78rem var(--panel-font-code); color: var(--panel-ink-soft); }

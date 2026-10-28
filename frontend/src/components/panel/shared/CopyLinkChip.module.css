@@ -1,0 +1,17 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--panel-space-2);
+  max-width: 100%;
+  min-height: 40px;
+  padding: 0 var(--panel-space-3);
+  border: 0;
+  border-radius: 999px;
+  background: var(--panel-accent-soft);
+  color: var(--panel-accent);
+  font: 600 .78rem var(--panel-font-code);
+  cursor: pointer;
+}
+.chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip:hover { background: #D5D9F8; }
+.chip:focus-visible { outline: 2px solid var(--panel-accent); outline-offset: 3px; }

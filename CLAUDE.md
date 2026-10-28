@@ -9,7 +9,8 @@ Este archivo lo lee Claude Code al trabajar en el repositorio. Resume las reglas
 2. **Prohibido** instalar o importar bibliotecas externas en el backend (Flask, FastAPI, pydantic, pytest, requests...).
 3. El grafo y sus algoritmos son **propios** (`backend/red.py`). NetworkX **solo** se importa en
    `backend/visualizacion.py` para dibujar datos que ya calculó nuestro código.
-4. El frontend (`frontend/`) es HTML + CSS + JavaScript sin frameworks y **consume la API real**.
+4. El frontend (`frontend/`) usa **React + TypeScript con Vite** (acuerdo del equipo) y **consume la API real**.
+   Se levanta con `npm run dev` desde `frontend/` (la restricción de "sin bibliotecas externas" aplica solo al backend).
 5. Solo datos sintéticos. Nunca datos personales reales.
 6. Pruebas de aceptación con `urllib` (sin pytest ni mocks). Cada escenario imprime:
    escenario, esperado, obtenido y PASÓ/FALLÓ.

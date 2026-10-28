@@ -1,0 +1,69 @@
+/* LandingClosing: S3 cierre con botones y pie de página. */
+
+.ls-closing { background: var(--ls-bg-deep); }
+.ls-closing .ls-title { font-size: clamp(2.4rem, 6.4vw, 4.75rem); letter-spacing: -0.035em; }
+
+.ls-buttons { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.ls-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 24px;
+  border: 1px solid var(--ls-border-strong);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ls-ink);
+  font: 600 .95rem/1 var(--ls-font-text);
+  text-decoration: none;
+  transition: transform .2s cubic-bezier(.2, .8, .2, 1), background-color .2s;
+}
+.ls-button:hover { transform: translateY(-2px); background: var(--ls-accent-soft); }
+.ls-button--primary {
+  border-color: var(--ls-accent);
+  background: var(--ls-accent);
+  color: var(--ls-on-accent);
+}
+.ls-button--primary:hover { background: #01359A; }
+
+.ls-footer {
+  margin-top: clamp(48px, 7vw, 80px);
+  padding-top: 40px;
+  border-top: 1px solid var(--ls-border);
+}
+.ls-footer__columns {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr;
+  gap: 32px;
+}
+.ls-footer__brand { display: flex; align-items: center; gap: 10px; font: 700 1.15rem/1 var(--ls-font-title); }
+.ls-footer p { margin: 10px 0 0; max-width: 32ch; font-size: .85rem; color: var(--ls-ink-soft); }
+.ls-footer h3 {
+  margin: 0 0 12px;
+  font: 700 .72rem/1 var(--ls-font-title);
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ls-accent);
+}
+.ls-footer ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: .9rem; font-weight: 600; }
+.ls-footer a { color: var(--ls-ink); text-decoration: none; }
+.ls-footer a:hover { color: var(--ls-accent); text-decoration: underline; }
+
+.ls-data-notice {
+  margin-top: 32px;
+  padding-top: 18px;
+  border-top: 1px solid var(--ls-border);
+  font-size: .78rem;
+  color: var(--ls-ink-soft);
+}
+
+@media (max-width: 720px) {
+  .ls-footer__columns { grid-template-columns: 1fr; gap: 28px; }
+  .ls-button { width: 100%; }
+}
+
+/* Sin backdrop-filter ni animaciones: no hay movimiento que desactivar. */
+@media (prefers-reduced-motion: reduce) {
+  .ls-button { transition: none; }
+  .ls-button:hover { transform: none; }
+}

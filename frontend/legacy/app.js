@@ -86,9 +86,93 @@ function pintarAdyacencia(lineas) {
     : "<li>La red está vacía.</li>";
 }
 
+function rutaImagen() {
+  return coberturaActiva
+    ? `/api/red/imagen/cobertura/${encodeURIComponent(coberturaActiva.origen)}`
+    : "/api/red/imagen";
+}
+
 function refrescarImagen() {
   const imagen = $("#imagen-red");
-  imagen.src = `/api/red/imagen?v=${Date.now()}`; // evita que el navegador use una imagen vieja
+  imagen.src = `${rutaImagen()}?v=${Date.now()}`; // evita que el navegador use una imagen vieja
+  $("#etiqueta-imagen").textContent = coberturaActiva
+    ? `Cobertura desde ${coberturaActiva.origen} · dibujado con NetworkX`
+    : "Dibujado con NetworkX";
+}
+
+// --- Cobertura de entregas (Feature 2) -------------------------------------
+
+let coberturaActiva = null; // { origen, destino } mientras se muestra una cobertura
+
+const lista = (elementos) => `<ul class="cobertura-lista">${elementos.join("")}</ul>`;
+
+function pintarCamino(camino) {
+  return `<div class="camino">${camino
+    .map((id) => `<span class="nodo">${escapar(id)}</span>`)
+    .join('<span aria-hidden="true">→</span>')}</div>`;
+}
+
+function pintarTraza(traza) {
+  const pasos = traza.map((p) => `<li><strong>${escapar(p.visita)}</strong> (capa ${escapar(p.capa)}): ${escapar(p.decision)}</li>`);
+  return `<details class="traza"><summary>Traza del recorrido (${traza.length} pasos)</summary><ol>${pasos.join("")}</ol></details>`;
+}
+
+function pintarCoberturaCompleta(datos) {
+  const alcanzables = datos.alcanzables.length
+    ? lista(datos.alcanzables.map((p) => `<li><strong class="codigo">${escapar(p.id)}</strong> ${insignia(p.tipo)}
+        <small>· ${escapar(p.saltos)} trayecto(s), llega desde ${escapar(p.llega_desde)}</small></li>`))
+    : '<p class="ayuda">Ningún punto alcanzable.</p>';
+  const noAlcanzables = datos.no_alcanzables.length
+    ? lista(datos.no_alcanzables.map((p) => `<li><strong class="codigo">${escapar(p.id)}</strong> ${insignia(p.tipo)}
+        <small>· ${escapar(p.motivo)}</small></li>`))
+    : '<p class="ayuda">Todos los puntos de la red están cubiertos.</p>';
+  return `
+    <p class="veredicto ${datos.total_alcanzables ? "si" : "no"}">${escapar(datos.mensaje)}</p>
+    <div class="cobertura-columnas">
+      <div><h3>Alcanzables (${datos.total_alcanzables})</h3>${alcanzables}</div>
+      <div><h3>No alcanzables (${datos.total_no_alcanzables})</h3>${noAlcanzables}</div>
+    </div>
+    <div class="cobertura-bloque"><h3>Orden de visita</h3>${pintarCamino(datos.orden_visita)}</div>
+    ${pintarTraza(datos.traza)}`;
+}
+
+function pintarVerificacion(datos) {
+  const detalle = datos.alcanzable
+    ? `<div class="cobertura-bloque"><h3>Camino de evidencia · ${escapar(datos.saltos)} trayecto(s)</h3>
+        ${pintarCamino(datos.camino)}<p class="nota">${escapar(datos.nota)}</p></div>`
+    : `<div class="cobertura-bloque"><h3>¿Por qué no?</h3><p>${escapar(datos.explicacion)}</p></div>`;
+  return `
+    <p class="veredicto ${datos.alcanzable ? "si" : "no"}">${escapar(datos.mensaje)}</p>
+    ${detalle}
+    ${datos.traza ? pintarTraza(datos.traza) : ""}`;
+}
+
+function mostrarResultadoCobertura(contenido, esError = false) {
+  const contenedor = $("#resultado-cobertura");
+  contenedor.classList.remove("oculto");
+  contenedor.innerHTML = esError ? `<p class="veredicto error">${escapar(contenido)}</p>` : contenido;
+}
+
+function limpiarCobertura() {
+  coberturaActiva = null;
+  $("#resultado-cobertura").classList.add("oculto");
+  $("#resultado-cobertura").innerHTML = "";
+}
+
+// Consulta la cobertura y la pinta. Devuelve true si la API respondió bien.
+async function consultarCobertura(consulta) {
+  const ruta = consulta.destino
+    ? `/api/cobertura/${encodeURIComponent(consulta.origen)}/${encodeURIComponent(consulta.destino)}`
+    : `/api/cobertura/${encodeURIComponent(consulta.origen)}`;
+  try {
+    const datos = await llamarApi("GET", ruta);
+    coberturaActiva = { origen: datos.origen.id, destino: datos.destino ? datos.destino.id : "" };
+    mostrarResultadoCobertura(consulta.destino ? pintarVerificacion(datos) : pintarCoberturaCompleta(datos));
+    return true;
+  } catch (error) {
+    mostrarResultadoCobertura(error.message, true);
+    return false;
+  }
 }
 
 async function refrescar() {
@@ -101,6 +185,8 @@ async function refrescar() {
   pintarPuntos(puntos.puntos, red.lista_adyacencia);
   pintarConexiones(conexiones.conexiones);
   pintarAdyacencia(red.texto);
+  // Con una cobertura a la vista se recalcula con la red nueva; si el origen ya no existe, se limpia.
+  if (coberturaActiva && !(await consultarCobertura(coberturaActiva))) limpiarCobertura();
   refrescarImagen();
 }
 
@@ -157,6 +243,24 @@ $("#form-consulta").addEventListener("submit", async (evento) => {
   }
 });
 
+$("#form-cobertura").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const formulario = evento.target;
+  const origen = formulario.origen.value.trim();
+  if (!origen) {
+    mostrarResultadoCobertura("Indique el punto de origen.", true);
+    return;
+  }
+  const exito = await consultarCobertura({ origen, destino: formulario.destino.value.trim() });
+  if (!exito) coberturaActiva = null; // un error de la API no deja una cobertura a medias en la imagen
+  refrescarImagen();
+});
+
+$("#boton-limpiar-cobertura").addEventListener("click", () => {
+  limpiarCobertura();
+  refrescarImagen();
+});
+
 $("#boton-ejemplo").addEventListener("click", () => {
   if (confirm("Se reemplazará la red actual por la red de ejemplo. ¿Continuar?")) {
     ejecutar(() => llamarApi("POST", "/api/red/ejemplo"));
@@ -172,7 +276,7 @@ $("#boton-vaciar").addEventListener("click", () => {
 $("#imagen-red").addEventListener("error", async () => {
   const mensaje = $("#imagen-error");
   try {
-    await llamarApi("GET", "/api/red/imagen");
+    await llamarApi("GET", rutaImagen());
   } catch (error) {
     mensaje.textContent = error.message;
   }

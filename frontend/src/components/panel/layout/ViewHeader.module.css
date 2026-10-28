@@ -1,0 +1,15 @@
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--panel-space-2) var(--panel-space-4);
+}
+.title {
+  margin: 0;
+  font: 700 clamp(1.5rem, 2.4vw, 2rem) var(--panel-font-title);
+  letter-spacing: -0.02em;
+  color: var(--panel-ink);
+}
+.description { margin: 6px 0 0; font-size: .95rem; line-height: 1.55; color: var(--panel-ink-soft); }
+.meta { font-size: .85rem; color: var(--panel-ink-soft); max-width: 100%; }

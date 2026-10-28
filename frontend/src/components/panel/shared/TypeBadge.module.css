@@ -1,0 +1,12 @@
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--panel-radius-xs);
+  background: var(--type-color);
+  color: #fff;
+  font: 600 .72rem var(--panel-font-text);
+  white-space: nowrap;
+}
+.dark { color: var(--panel-ink); }
+.dotWrap { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--type-color); flex: none; }

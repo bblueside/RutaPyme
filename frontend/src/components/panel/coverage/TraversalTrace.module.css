@@ -1,0 +1,5 @@
+.list { display: flex; flex-direction: column; gap: var(--panel-space-2); margin: 0 0 var(--panel-space-2); padding: var(--panel-space-3); list-style: none; border-radius: var(--panel-radius-sm); background: var(--panel-muted); }
+.step { display: flex; align-items: flex-start; gap: var(--panel-space-3); font-size: .85rem; }
+.number { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; border-radius: 50%; background: var(--panel-surface); border: 1px solid var(--panel-border); font: 600 .7rem var(--panel-font-code); flex: none; }
+.layer { color: var(--panel-ink-soft); }
+.decision { display: block; color: var(--panel-ink-soft); font-size: .8rem; overflow-wrap: anywhere; }

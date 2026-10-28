@@ -1,6 +1,6 @@
 """API REST de RutaPyme construida solo con la biblioteca estándar (http.server).
 
-También sirve los archivos de la interfaz web (carpeta frontend/), así que API e interfaz
+También sirve los archivos de la interfaz web (carpeta frontend/legacy/), así que API e interfaz
 viven en el mismo servidor y la interfaz consume la API real.
 Contrato de endpoints: docs/feature-1/especificacion.md (sección 5) y
 docs/feature-2/especificacion.md (sección 5).
@@ -17,7 +17,7 @@ from backend import visualizacion
 from backend.red import TIPOS_PUNTO, ErrorRed, FormatoIncorrecto, RedOperativa
 
 RAIZ = Path(__file__).resolve().parent.parent
-CARPETA_FRONTEND = RAIZ / "frontend"
+CARPETA_FRONTEND = RAIZ / "frontend" / "legacy"
 ARCHIVO_EJEMPLO = RAIZ / "datos" / "red_ejemplo.json"
 TAMANO_MAXIMO_CUERPO = 10_000  # bytes; una petición de esta API nunca necesita más
 

@@ -6,12 +6,12 @@ Microproducto para la materia **Matemáticas para la Informática Avanzada** · 
 RutaPyme coordina entregas entre una bodega, barrios y puntos de recogida. Hoy decide "a ojo" y a
 veces envía pedidos por conexiones cerradas. Esta herramienta modela su red como un
 **grafo dirigido y ponderado propio**, lo expone con una **API REST en Python** y lo muestra en una
-**interfaz web** conectada a esa API.
+**interfaz web** (React + TypeScript) conectada a esa API.
 
 | Feature | Estado | Descripción |
 |---------|--------|-------------|
-| 1 · Red operativa inicial | 🚧 En construcción | Registrar y consultar puntos y trayectos |
-| 2 · Cobertura de entregas | ⏳ Pendiente | ¿Qué destinos alcanzo desde una bodega? |
+| 1 · Red operativa inicial | ✅ Completa | Registrar y consultar puntos y trayectos |
+| 2 · Cobertura de entregas | ✅ Completa | ¿Qué destinos alcanzo desde una bodega? Backend, API e interfaz listos |
 | 3 · Ruta de menor costo | ⏳ Pendiente | Ruta más barata entre dos puntos |
 | 4 · Operación demostrable | ⏳ Pendiente | Integración, cambio de requisito y demo |
 
@@ -19,7 +19,7 @@ veces envía pedidos por conexiones cerradas. Esta herramienta modela su red com
 
 ## 1. Instalación
 
-Requisitos: **Python 3.12 o superior** y Git.
+Requisitos: **Python 3.12 o superior**, **Node.js 20 o superior** (solo para el frontend) y Git.
 
 ```bash
 git clone <URL-del-repositorio>
@@ -44,14 +44,49 @@ pip install -r requirements.txt
 
 ## 2. Ejecución
 
+### Backend (API)
+
 ```bash
 python main.py              # red vacía
 python main.py --ejemplo    # red sintética de datos/red_ejemplo.json
 ```
 
-Abrir **http://127.0.0.1:8000** en el navegador. La misma dirección sirve la interfaz y la API.
+La API escucha en **http://127.0.0.1:8000**. Opciones: `--puerto 8080`, `--host 0.0.0.0`; también se leen
+las variables de entorno `PORT` y `HOST`. El backend sirve además la interfaz anterior (`frontend/legacy/`)
+en esa misma dirección, como respaldo.
 
-Opciones: `--puerto 8080`, `--host 0.0.0.0`. También se leen las variables de entorno `PORT` y `HOST`.
+### Frontend (landing y panel)
+
+En otra terminal, con el backend encendido. La primera vez instala las dependencias:
+
+```bash
+cd frontend
+npm install
+```
+
+Para encender el frontend (las siguientes veces basta con este comando):
+
+```bash
+npm run dev
+```
+
+Otros comandos útiles, desde `frontend/`:
+
+```bash
+npm run lint      # revisa el código con ESLint
+npm run build     # comprueba tipos y genera el build de producción
+npm run preview   # sirve el build de producción localmente
+```
+
+Abrir **http://localhost:5173** (landing) y **http://localhost:5173/app** (panel). Vite reenvía `/api` al
+backend en `:8000`, por lo que no se necesita CORS. Más detalle en [`frontend/README.md`](frontend/README.md).
+
+| Ruta del panel | Vista |
+|----------------|-------|
+| `/app` | Resumen: contadores, lista de adyacencia e imagen de la red |
+| `/app/points` | Puntos: registrar, listar y consultar salidas |
+| `/app/connections` | Conexiones: registrar y listar trayectos |
+| `/app/coverage?from=&to=` | Cobertura de entregas y verificación origen → destino |
 
 ## 3. Pruebas de aceptación
 
@@ -59,12 +94,17 @@ Con el servidor encendido, en otra terminal:
 
 ```bash
 python pruebas/aceptacion_feature1.py
+python pruebas/aceptacion_feature2.py
 ```
 
-El script usa solo `urllib`, vacía la red al empezar (se puede repetir) y ejecuta **33 escenarios**:
-red vacía, flujo normal, dirección y ciclos, puntos inexistentes, datos inválidos, errores de la API,
-imagen y datos de ejemplo. Por cada uno imprime *esperado*, *obtenido* y **PASÓ/FALLÓ**.
-Última salida: [`pruebas/salidas/aceptacion_feature1.txt`](pruebas/salidas/aceptacion_feature1.txt) → **33/33 aprobados**.
+Los scripts usan solo `urllib`, vacían la red al empezar (se pueden repetir) y por cada escenario imprimen
+*esperado*, *obtenido* y **PASÓ/FALLÓ**.
+
+- **Feature 1:** 33 escenarios (red vacía, flujo normal, dirección y ciclos, puntos inexistentes, datos
+  inválidos, errores de la API, imagen y datos de ejemplo). Última salida:
+  [`pruebas/salidas/aceptacion_feature1.txt`](pruebas/salidas/aceptacion_feature1.txt) → **33/33 aprobados**.
+- **Feature 2:** cobertura desde una bodega, verificación origen → destino, puntos aislados, ciclos y errores.
+- **Panel web:** checklist manual en [`pruebas/prueba_manual_panel.md`](pruebas/prueba_manual_panel.md).
 
 ## 4. Endpoints de la API REST
 
@@ -79,6 +119,9 @@ imagen y datos de ejemplo. Por cada uno imprime *esperado*, *obtenido* y **PASÓ
 | POST | `/api/conexiones` | `{"origen": "BOD-CENTRO", "destino": "BAR-NORTE", "costo": 12}` | 201 · 400 · 404 · 409 |
 | GET | `/api/red` | — | 200 representación legible (lista de adyacencia + texto) |
 | GET | `/api/red/imagen` | — | 200 PNG dibujado con NetworkX |
+| GET | `/api/red/imagen/cobertura/{origen}` | — | 200 PNG con la cobertura de `origen` resaltada · 404 |
+| GET | `/api/cobertura/{origen}` | — | 200 puntos alcanzables y no alcanzables, saltos y recorrido · 400 · 404 |
+| GET | `/api/cobertura/{origen}/{destino}` | — | 200 `alcanzable` (sí/no), camino y explicación · 404 |
 | POST | `/api/red/ejemplo` | — | 201 carga la red sintética |
 | DELETE | `/api/red` | — | 200 vacía la red |
 
@@ -92,9 +135,10 @@ Todos los errores tienen la misma forma:
 |------|----------|--------|
 | 400 | `formato_incorrecto` | JSON inválido, cuerpo que no es objeto, campo faltante |
 | 400 | `dato_invalido` | id, tipo o costo inválido; lazo A→A |
-| 404 | `punto_inexistente` · `ruta_no_encontrada` | punto no registrado · endpoint que no existe |
+| 404 | `punto_inexistente` · `red_vacia` · `ruta_no_encontrada` | punto no registrado · endpoint que no existe |
 | 405 | `metodo_no_permitido` | método incorrecto para la ruta |
 | 409 | `punto_duplicado` · `conexion_duplicada` | el elemento ya existe |
+| 503 | `visualizacion_no_disponible` | faltan NetworkX/matplotlib (`pip install -r requirements.txt`) |
 
 Ejemplo rápido desde PowerShell:
 
@@ -115,9 +159,17 @@ Detalle completo en [`docs/feature-1/modelado.md`](docs/feature-1/modelado.md).
   harán los recorridos es "¿a dónde puedo ir desde aquí?": cuesta **O(grado)** en vez de **O(V)** con una
   matriz, y la memoria es **O(V + E)** en vez de **O(V²)**. El diccionario interno detecta duplicados en O(1).
 - **Validaciones** en el núcleo (`backend/red.py`), no en la interfaz: toda entrada pasa por las mismas reglas.
-- **Sin frameworks:** API con `http.server` de la biblioteca estándar. Interfaz en HTML, CSS y JS nativos.
+- **Cobertura (Feature 2):** recorrido **por capas (BFS) propio** sobre la lista de adyacencia, en
+  O(V + E). Respeta el sentido de los trayectos y explica por qué un punto no es alcanzable. Detalle en
+  [`docs/feature-2/modelado.md`](docs/feature-2/modelado.md).
+- **Sin frameworks en el backend:** API con `http.server` de la biblioteca estándar. El frontend (React +
+  TypeScript con Vite) es un acuerdo del equipo y consume la API real.
 
 ![Red de ejemplo dibujada con NetworkX](docs/img/red-ejemplo.png)
+
+Cobertura desde `BOD-CENTRO` resaltada:
+
+![Cobertura de BOD-CENTRO](docs/img/cobertura-bod-centro.png)
 
 ## 6. Reglas de la guía técnica y cómo se cumplen
 
@@ -127,9 +179,9 @@ Detalle completo en [`docs/feature-1/modelado.md`](docs/feature-1/modelado.md).
 | Entorno virtual y `requirements.txt` | `.venv` + [`requirements.txt`](requirements.txt) |
 | Grafo y algoritmos propios | [`backend/red.py`](backend/red.py) no importa NetworkX |
 | NetworkX solo para visualizar | Solo se importa en [`backend/visualizacion.py`](backend/visualizacion.py), que copia la red ya validada para dibujarla. `matplotlib` es el motor que NetworkX usa para producir la imagen |
-| Frontend consume el backend real | [`frontend/app.js`](frontend/app.js) usa `fetch('/api/...')` |
+| Frontend consume el backend real | [`frontend/src/services/`](frontend/src/services/) usa `fetch('/api/...')` (React + TypeScript + Vite) |
 | Datos sintéticos | [`datos/red_ejemplo.json`](datos/red_ejemplo.json) (nombres inventados) |
-| Pruebas sin frameworks | [`pruebas/aceptacion_feature1.py`](pruebas/aceptacion_feature1.py) con `urllib` |
+| Pruebas sin frameworks | [`pruebas/aceptacion_feature1.py`](pruebas/aceptacion_feature1.py) y [`aceptacion_feature2.py`](pruebas/aceptacion_feature2.py) con `urllib` |
 
 ## Documentación
 
@@ -139,6 +191,10 @@ Detalle completo en [`docs/feature-1/modelado.md`](docs/feature-1/modelado.md).
 | [Modelado F1](docs/feature-1/modelado.md) | Dirección, peso, estructura, complejidad y traza manual |
 | [Plan F1](docs/feature-1/plan.md) | Local vs despliegue, arquitectura, tareas y flujo en GitHub |
 | [Bitácora de IA F1](docs/ia/bitacora-feature-1.md) | Propuestas de la IA, decisión y verificación |
+| [Especificación F2](docs/feature-2/especificacion.md) | Cobertura: historias, reglas, criterios y contrato de la API |
+| [Modelado F2](docs/feature-2/modelado.md) · [Plan F2](docs/feature-2/plan.md) · [Pitch F2](docs/feature-2/pitch.md) | Recorrido BFS, tareas y presentación |
+| [Plan del frontend](docs/frontend/plan.md) · [Plan de diseño](docs/frontend/plan-diseno.md) | Arquitectura del panel y bocetos |
+| [Bitácora de IA frontend](docs/ia/bitacora-frontend.md) · [landing](docs/ia/bitacora-landing.md) | Propuestas de la IA en la interfaz |
 
 ## Flujo de trabajo en GitHub
 

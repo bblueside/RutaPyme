@@ -1,0 +1,5 @@
+.label {
+  font: 400 .72rem var(--panel-font-code);
+  color: var(--panel-ink-soft);
+  overflow-wrap: anywhere;
+}

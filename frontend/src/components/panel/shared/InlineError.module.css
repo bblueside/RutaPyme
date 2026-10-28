@@ -1,0 +1,6 @@
+.error {
+  margin: 0;
+  color: var(--panel-error);
+  font: 500 .8rem/1.45 var(--panel-font-text);
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,106 @@
+{
+  "videos": {
+    "escena_1.av1": {
+      "crf": 38,
+      "presupuesto_mb": 1.9,
+      "ssim": 0.997047
+    },
+    "escena_1.h264": {
+      "crf": 26,
+      "ssim": 0.995142
+    },
+    "escena_1.movil.av1": {
+      "crf": 36,
+      "ssim": 0.996141
+    },
+    "escena_1.movil.h264": {
+      "crf": 27,
+      "ssim": 0.993169
+    },
+    "escena_2.av1": {
+      "crf": 35,
+      "presupuesto_mb": 3.3,
+      "ssim": 0.993336
+    },
+    "escena_2.h264": {
+      "crf": 26,
+      "ssim": 0.988108
+    },
+    "escena_2.movil.av1": {
+      "crf": 36,
+      "ssim": 0.991631
+    },
+    "escena_2.movil.h264": {
+      "crf": 27,
+      "ssim": 0.986734
+    },
+    "escena_3.av1": {
+      "crf": 35,
+      "presupuesto_mb": 3.3,
+      "ssim": 0.993899
+    },
+    "escena_3.h264": {
+      "crf": 26,
+      "ssim": 0.98825
+    },
+    "escena_3.movil.av1": {
+      "crf": 36,
+      "ssim": 0.992444
+    },
+    "escena_3.movil.h264": {
+      "crf": 27,
+      "ssim": 0.98675
+    },
+    "escena_4.av1": {
+      "crf": 40,
+      "presupuesto_mb": 3.3,
+      "ssim": 0.988779
+    },
+    "escena_4.h264": {
+      "crf": 26,
+      "ssim": 0.982974
+    },
+    "escena_4.movil.av1": {
+      "crf": 36,
+      "ssim": 0.988153
+    },
+    "escena_4.movil.h264": {
+      "crf": 27,
+      "ssim": 0.980986
+    },
+    "conector_2_3.av1": {
+      "crf": 34,
+      "presupuesto_mb": 3.3,
+      "ssim": 0.992628
+    },
+    "conector_2_3.h264": {
+      "crf": 26,
+      "ssim": 0.986214
+    },
+    "conector_2_3.movil.av1": {
+      "crf": 36,
+      "ssim": 0.989672
+    },
+    "conector_2_3.movil.h264": {
+      "crf": 27,
+      "ssim": 0.984907
+    },
+    "conector_3_4.av1": {
+      "crf": 36,
+      "presupuesto_mb": 3.3,
+      "ssim": 0.992992
+    },
+    "conector_3_4.h264": {
+      "crf": 26,
+      "ssim": 0.987287
+    },
+    "conector_3_4.movil.av1": {
+      "crf": 36,
+      "ssim": 0.991101
+    },
+    "conector_3_4.movil.h264": {
+      "crf": 27,
+      "ssim": 0.985318
+    }
+  }
+}

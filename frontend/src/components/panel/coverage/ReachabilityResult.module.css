@@ -1,0 +1,2 @@
+.explanation { margin: var(--panel-space-3) 0 0; font-size: .92rem; line-height: 1.55; color: var(--panel-ink); }
+.coverTitle { margin: var(--panel-space-4) 0 var(--panel-space-2); font: 600 .85rem var(--panel-font-text); color: var(--panel-ink-soft); }

@@ -1,131 +1,26 @@
 <!doctype html>
 <html lang="es">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RutaPyme · Red operativa</title>
-  <link rel="stylesheet" href="/estilos.css">
-</head>
-<body>
-  <header class="barra">
-    <div class="marca">
-      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>RutaPyme · Rutas más baratas con inteligencia de grafos</title>
+    <meta name="description" content="Convierte tu red de entregas en un grafo y calcula en segundos la ruta de menor costo. Menos kilómetros, más entregas por día." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" />
+    <!-- El póster de la escena 1 es el LCP: se pide antes de que el motor monte el DOM. -->
+    <link rel="preload" as="image" type="image/avif" fetchpriority="high" imagesizes="100vw"
+          imagesrcset="/landing/escenas/opt/escena_1.v2-1280.avif 1280w, /landing/escenas/opt/escena_1.v2-1920.avif 1920w, /landing/escenas/opt/escena_1.v2-2560.avif 2560w" />
+  </head>
+  <body>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+      <symbol id="graph-logo" viewBox="0 0 32 32">
         <circle cx="7" cy="8" r="4"/><circle cx="25" cy="10" r="4"/><circle cx="14" cy="25" r="4"/>
         <path d="M10.5 9 L21 10 M23 13.5 L16.5 22 M12 21.5 L8 11.5"/>
-      </svg>
-      <div>
-        <h1>RutaPyme</h1>
-        <p>Red operativa · Feature 1</p>
-      </div>
-    </div>
-    <div class="acciones">
-      <span id="estado-api" class="pastilla">Conectando…</span>
-      <button id="boton-ejemplo" class="boton secundario" type="button">Cargar red de ejemplo</button>
-      <button id="boton-vaciar" class="boton peligro" type="button">Vaciar red</button>
-    </div>
-  </header>
-
-  <main class="contenedor">
-    <section class="resumen" aria-label="Resumen de la red">
-      <article class="dato"><span id="total-puntos">0</span><small>Puntos</small></article>
-      <article class="dato"><span id="total-conexiones">0</span><small>Conexiones</small></article>
-      <article class="dato bodega"><span id="total-bodega">0</span><small>Bodegas</small></article>
-      <article class="dato barrio"><span id="total-barrio">0</span><small>Barrios</small></article>
-      <article class="dato punto_recogida"><span id="total-punto_recogida">0</span><small>Puntos de recogida</small></article>
-    </section>
-
-    <div class="rejilla principal">
-      <div class="columna">
-        <section class="tarjeta">
-          <h2>Registrar punto</h2>
-          <form id="form-punto" autocomplete="off">
-            <label>Identificador
-              <input name="identificador" placeholder="BOD-CENTRO" maxlength="40">
-            </label>
-            <label>Tipo
-              <select name="tipo" id="select-tipo"></select>
-            </label>
-            <button class="boton" type="submit">Agregar punto</button>
-          </form>
-          <p class="ayuda">Letras sin tilde, números, “-” o “_”. Se guarda en mayúsculas.</p>
-        </section>
-
-        <section class="tarjeta">
-          <h2>Registrar conexión</h2>
-          <form id="form-conexion" autocomplete="off">
-            <div class="fila-campos">
-              <label>Origen
-                <input name="origen" list="lista-puntos" placeholder="BOD-CENTRO">
-              </label>
-              <span class="flecha" aria-hidden="true">→</span>
-              <label>Destino
-                <input name="destino" list="lista-puntos" placeholder="BAR-NORTE">
-              </label>
-            </div>
-            <label>Costo (minutos)
-              <input name="costo" type="number" step="any" placeholder="12">
-            </label>
-            <button class="boton" type="submit">Agregar conexión</button>
-          </form>
-          <p class="ayuda">La conexión es dirigida: A → B no crea B → A.</p>
-          <datalist id="lista-puntos"></datalist>
-        </section>
-      </div>
-
-      <section class="tarjeta">
-        <div class="titulo-tarjeta">
-          <h2>Vista del grafo</h2>
-          <span class="etiqueta">Dibujado con NetworkX</span>
-        </div>
-        <div class="marco-imagen">
-          <img id="imagen-red" alt="Dibujo de la red operativa: puntos y trayectos con su costo">
-          <p id="imagen-error" class="ayuda oculto"></p>
-        </div>
-      </section>
-    </div>
-
-    <div class="rejilla">
-      <section class="tarjeta">
-        <h2>Puntos</h2>
-        <div class="tabla-desplazable">
-          <table>
-            <thead><tr><th>Identificador</th><th>Tipo</th><th class="numero">Salidas</th></tr></thead>
-            <tbody id="tabla-puntos"></tbody>
-          </table>
-        </div>
-      </section>
-      <section class="tarjeta">
-        <h2>Conexiones</h2>
-        <div class="tabla-desplazable">
-          <table>
-            <thead><tr><th>Origen</th><th></th><th>Destino</th><th class="numero">Costo (min)</th></tr></thead>
-            <tbody id="tabla-conexiones"></tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-
-    <section class="tarjeta">
-      <div class="titulo-tarjeta">
-        <h2>Lista de adyacencia</h2>
-        <span class="etiqueta">Red dirigida · peso = minutos</span>
-      </div>
-      <ul id="lista-adyacencia" class="adyacencia"></ul>
-      <form id="form-consulta" class="consulta" autocomplete="off">
-        <label>Consultar salidas de un punto
-          <input name="identificador" list="lista-puntos" placeholder="BAR-NORTE">
-        </label>
-        <button class="boton secundario" type="submit">Consultar</button>
-      </form>
-      <p id="resultado-consulta" class="resultado oculto"></p>
-    </section>
-  </main>
-
-  <footer class="pie">
-    Equipo 7 · [Nombre Miembro 1], [Nombre Miembro 2], [Nombre Miembro 3] y [Nombre Miembro 4] · Matemáticas para la Informática Avanzada
-  </footer>
-
-  <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
-  <script src="/app.js"></script>
-</body>
+      </symbol>
+    </svg>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

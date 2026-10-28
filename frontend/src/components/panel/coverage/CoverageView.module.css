@@ -1,0 +1,2 @@
+.examples { display: flex; flex-wrap: wrap; gap: var(--panel-space-2); margin-top: var(--panel-space-4); }
+.examples button { font-family: var(--panel-font-code); font-weight: 600; min-height: 40px; }

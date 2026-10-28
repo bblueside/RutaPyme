@@ -1,0 +1,1 @@
+.legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: var(--panel-space-3) 0 0; padding: 0; list-style: none; font-size: .82rem; color: var(--panel-ink-soft); }

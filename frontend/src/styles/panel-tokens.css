@@ -1,0 +1,31 @@
+/* Tokens de color y fuente del panel. Solo variables: la forma y el espacio están en panel-shape.css. */
+:root {
+  --panel-bg: #F6F7FE;
+  --panel-surface: #FFFFFF;
+  --panel-ink: #0B1640;
+  --panel-ink-soft: #5B6385;
+  --panel-accent: #0146C1;
+  --panel-accent-soft: #E3E5FC;
+  --panel-on-accent: #FFFFFF;
+
+  --panel-success: #15803D;
+  --panel-success-bg: #E8F6EE;
+  --panel-success-line: #A7DDBE;
+  --panel-error: #DC2626;
+  --panel-error-bg: #FDECEC;
+  --panel-error-line: #F5B5B5;
+  --panel-warning: #B45309;
+  --panel-warning-bg: #FEF3E2;
+  --panel-warning-line: #F3CE95;
+  --panel-info-bg: #EAF0FD;
+  --panel-info-line: #BFD0F5;
+
+  /* Mismos colores que la imagen que dibuja NetworkX. */
+  --panel-type-bodega: #E4572E;
+  --panel-type-barrio: #2E86AB;
+  --panel-type-recogida: #3BB273;
+
+  --panel-font-title: "Inter Tight", system-ui, sans-serif;
+  --panel-font-text: "Manrope", system-ui, sans-serif;
+  --panel-font-code: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
