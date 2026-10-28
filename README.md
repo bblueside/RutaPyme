@@ -11,7 +11,7 @@ veces envía pedidos por conexiones cerradas. Esta herramienta modela su red com
 | Feature | Estado | Descripción |
 |---------|--------|-------------|
 | 1 · Red operativa inicial | ✅ Completa | Registrar y consultar puntos y trayectos |
-| 2 · Cobertura de entregas | 🚧 En integración | ¿Qué destinos alcanzo desde una bodega? Backend, API e interfaz listos; falta cerrar PR |
+| 2 · Cobertura de entregas | ✅ Completa | ¿Qué destinos alcanzo desde una bodega? Backend, API e interfaz listos |
 | 3 · Ruta de menor costo | ⏳ Pendiente | Ruta más barata entre dos puntos |
 | 4 · Operación demostrable | ⏳ Pendiente | Integración, cambio de requisito y demo |
 
