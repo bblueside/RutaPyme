@@ -198,6 +198,17 @@ def escenarios_inexistentes_e_invalidos():
               (resumen["puntos"], resumen["conexiones"]) == (7, 10))
 
 
+def escenarios_visualizacion():
+    seccion("Visualización del resultado")
+    estado, contenido = llamar("GET", "/api/red/imagen/cobertura/BOD-CENTRO")
+    es_png = isinstance(contenido, bytes) and contenido.startswith(b"\x89PNG")
+    verificar("Imagen de la cobertura dibujada con NetworkX a partir de nuestro BFS",
+              "200 con firma PNG", f"{estado} con firma PNG={es_png}", estado == 200 and es_png)
+
+    esperar_error("Imagen de cobertura con origen inexistente", "GET", "/api/red/imagen/cobertura/NO-EXISTE",
+                  404, "punto_inexistente")
+
+
 def escenarios_red_pequena():
     seccion("Red con un solo punto y componente aislado")
     llamar("DELETE", "/api/red")
@@ -236,6 +247,7 @@ def main():
     escenarios_no_alcanzables()
     escenarios_ciclos()
     escenarios_inexistentes_e_invalidos()
+    escenarios_visualizacion()
     escenarios_red_pequena()
 
     aprobados = sum(resultados)

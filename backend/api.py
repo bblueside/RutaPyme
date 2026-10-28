@@ -51,6 +51,7 @@ RUTAS = [
     ("GET", "/api/red", "ver_red"),
     ("DELETE", "/api/red", "vaciar_red"),
     ("GET", "/api/red/imagen", "ver_imagen"),
+    ("GET", "/api/red/imagen/cobertura/{origen}", "ver_imagen_cobertura"),
     ("POST", "/api/red/ejemplo", "cargar_ejemplo"),
     ("GET", "/api/cobertura", "cobertura_sin_origen"),
     ("GET", "/api/cobertura/{origen}", "consultar_cobertura"),
@@ -220,11 +221,22 @@ class ManejadorRutaPyme(BaseHTTPRequestHandler):
         self._enviar_json(200, self.red.verificar_cobertura(origen, destino))
 
     def ver_imagen(self):
+        if not self._visualizacion_disponible():
+            return
+        self._enviar(200, visualizacion.dibujar_red(self.red), "image/png")
+
+    def ver_imagen_cobertura(self, origen):
+        # Primero nuestro recorrido calcula la cobertura (y valida el origen); NetworkX solo la pinta.
+        cobertura = self.red.cobertura(origen)
+        if not self._visualizacion_disponible():
+            return
+        self._enviar(200, visualizacion.dibujar_red(self.red, cobertura), "image/png")
+
+    def _visualizacion_disponible(self):
         if not visualizacion.DISPONIBLE:
             self._enviar_error(503, "visualizacion_no_disponible",
                                "Instale las dependencias con: pip install -r requirements.txt")
-            return
-        self._enviar(200, visualizacion.dibujar_red(self.red), "image/png")
+        return visualizacion.DISPONIBLE
 
     # --- Salida -----------------------------------------------------------
 
