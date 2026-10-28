@@ -15,7 +15,7 @@
       </svg>
       <div>
         <h1>RutaPyme</h1>
-        <p>Red operativa · Feature 1</p>
+        <p>Red operativa · Features 1 y 2</p>
       </div>
     </div>
     <div class="acciones">
@@ -75,7 +75,7 @@
       <section class="tarjeta">
         <div class="titulo-tarjeta">
           <h2>Vista del grafo</h2>
-          <span class="etiqueta">Dibujado con NetworkX</span>
+          <span id="etiqueta-imagen" class="etiqueta">Dibujado con NetworkX</span>
         </div>
         <div class="marco-imagen">
           <img id="imagen-red" alt="Dibujo de la red operativa: puntos y trayectos con su costo">
@@ -83,6 +83,25 @@
         </div>
       </section>
     </div>
+
+    <section class="tarjeta" id="seccion-cobertura">
+      <div class="titulo-tarjeta">
+        <h2>Cobertura de entregas</h2>
+        <span class="etiqueta">Recorrido por capas (BFS) propio · responde “¿puedo llegar?”, no “¿cuál es la más barata?”</span>
+      </div>
+      <form id="form-cobertura" class="consulta-cobertura" autocomplete="off">
+        <label>Origen
+          <input name="origen" list="lista-puntos" placeholder="BOD-CENTRO">
+        </label>
+        <label>Destino (opcional)
+          <input name="destino" list="lista-puntos" placeholder="BAR-ORIENTE">
+        </label>
+        <button class="boton" type="submit">Consultar cobertura</button>
+        <button id="boton-limpiar-cobertura" class="boton secundario" type="button">Quitar resaltado</button>
+      </form>
+      <p class="ayuda">Sin destino se listan todos los puntos alcanzables; con destino se verifica ese punto. La red es dirigida: A → B no permite B → A.</p>
+      <div id="resultado-cobertura" class="oculto" aria-live="polite"></div>
+    </section>
 
     <div class="rejilla">
       <section class="tarjeta">

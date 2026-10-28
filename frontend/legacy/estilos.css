@@ -199,6 +199,27 @@ th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; colo
 .resultado.error { color: var(--peligro); }
 .oculto { display: none; }
 
+/* --- Cobertura de entregas --- */
+.consulta-cobertura { grid-template-columns: 1fr 1fr auto auto; align-items: end; }
+@media (max-width: 820px) { .consulta-cobertura { grid-template-columns: 1fr; } }
+.tarjeta .consulta-cobertura .boton.secundario { border: 1px solid var(--borde); background: var(--fondo); color: var(--texto); }
+.veredicto { margin: 1rem 0 0.6rem; padding: 0.8rem 1rem; border-radius: 10px; font-weight: 600; border-left: 5px solid var(--primario); background: var(--fondo); }
+.veredicto.si { border-left-color: var(--exito); }
+.veredicto.no { border-left-color: var(--peligro); }
+.veredicto.error { border-left-color: var(--peligro); color: var(--peligro); }
+.cobertura-columnas { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin-top: 0.8rem; }
+.cobertura-columnas h3, .cobertura-bloque h3 { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--texto-suave); margin: 0 0 0.4rem; }
+.cobertura-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; font-size: 0.86rem; }
+.cobertura-lista li { padding: 0.4rem 0.6rem; border-radius: 8px; background: var(--fondo); }
+.cobertura-lista small { color: var(--texto-suave); }
+.camino { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; margin: 0.4rem 0; }
+.camino .nodo { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px; background: var(--fondo); border: 1px solid var(--borde); }
+.nota { font-size: 0.8rem; color: var(--texto-suave); margin: 0.4rem 0 0; }
+.cobertura-bloque { margin-top: 1rem; }
+.traza { margin-top: 1rem; }
+.traza summary { cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+.traza ol { margin: 0.6rem 0 0; padding-left: 1.4rem; font-size: 0.84rem; display: grid; gap: 0.3rem; }
+
 /* --- Aviso emergente --- */
 .aviso {
   position: fixed;
