@@ -2,7 +2,8 @@
 
 También sirve los archivos de la interfaz web (carpeta frontend/), así que API e interfaz
 viven en el mismo servidor y la interfaz consume la API real.
-Contrato de endpoints: docs/feature-1/especificacion.md, sección 5.
+Contrato de endpoints: docs/feature-1/especificacion.md (sección 5) y
+docs/feature-2/especificacion.md (sección 5).
 """
 
 import json
@@ -28,6 +29,7 @@ ESTADO_HTTP_POR_ERROR = {
     "punto_inexistente": 404,
     "punto_duplicado": 409,
     "conexion_duplicada": 409,
+    "red_vacia": 404,
 }
 
 ARCHIVOS_ESTATICOS = {
@@ -49,7 +51,11 @@ RUTAS = [
     ("GET", "/api/red", "ver_red"),
     ("DELETE", "/api/red", "vaciar_red"),
     ("GET", "/api/red/imagen", "ver_imagen"),
+    ("GET", "/api/red/imagen/cobertura/{origen}", "ver_imagen_cobertura"),
     ("POST", "/api/red/ejemplo", "cargar_ejemplo"),
+    ("GET", "/api/cobertura", "cobertura_sin_origen"),
+    ("GET", "/api/cobertura/{origen}", "consultar_cobertura"),
+    ("GET", "/api/cobertura/{origen}/{destino}", "verificar_cobertura"),
 ]
 
 
@@ -159,7 +165,7 @@ class ManejadorRutaPyme(BaseHTTPRequestHandler):
         return self.server.red
 
     def salud(self):
-        self._enviar_json(200, {"estado": "ok", "servicio": "RutaPyme API", "feature": 1})
+        self._enviar_json(200, {"estado": "ok", "servicio": "RutaPyme API", "feature": 2})
 
     def listar_tipos(self):
         self._enviar_json(200, {"tipos": list(TIPOS_PUNTO)})
@@ -204,12 +210,33 @@ class ManejadorRutaPyme(BaseHTTPRequestHandler):
             "resumen": self.red.representacion()["resumen"],
         })
 
+    def cobertura_sin_origen(self):
+        raise FormatoIncorrecto("Indique el punto de origen en la ruta: /api/cobertura/{origen} "
+                                "o /api/cobertura/{origen}/{destino}.")
+
+    def consultar_cobertura(self, origen):
+        self._enviar_json(200, self.red.cobertura(origen))
+
+    def verificar_cobertura(self, origen, destino):
+        self._enviar_json(200, self.red.verificar_cobertura(origen, destino))
+
     def ver_imagen(self):
+        if not self._visualizacion_disponible():
+            return
+        self._enviar(200, visualizacion.dibujar_red(self.red), "image/png")
+
+    def ver_imagen_cobertura(self, origen):
+        # Primero nuestro recorrido calcula la cobertura (y valida el origen); NetworkX solo la pinta.
+        cobertura = self.red.cobertura(origen)
+        if not self._visualizacion_disponible():
+            return
+        self._enviar(200, visualizacion.dibujar_red(self.red, cobertura), "image/png")
+
+    def _visualizacion_disponible(self):
         if not visualizacion.DISPONIBLE:
             self._enviar_error(503, "visualizacion_no_disponible",
                                "Instale las dependencias con: pip install -r requirements.txt")
-            return
-        self._enviar(200, visualizacion.dibujar_red(self.red), "image/png")
+        return visualizacion.DISPONIBLE
 
     # --- Salida -----------------------------------------------------------
 
