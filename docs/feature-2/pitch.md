@@ -100,7 +100,7 @@ Tener abierta la sección **Cobertura de entregas** y, de respaldo, el video de 
 | 4 | Destino `PR-LAGUNA` | No, con explicación | Pasa al caso borde (bloque 5) |
 | 5 | Registrar una conexión nueva hacia `PR-LAGUNA` | La cobertura se recalcula sola | "El coordinador arregla la red y el despachador lo ve al instante" (CA-31) |
 
-**Si algo falla:** mostrar el video y la salida guardada en `pruebas/salidas/aceptacion_feature2.txt`.
+**Si algo falla:** mostrar el video y la salida del script (guardarla antes en `pruebas/salidas/aceptacion_feature2.txt`: hoy ese archivo no existe).
 No depurar en vivo.
 
 ## 5. Caso borde: la dirección importa (45 s)
@@ -123,8 +123,8 @@ trayectos, no el más barato. A `PR-ESTACION`: directo = 1 trayecto/30 min; por 
 ## 6. Evidencia y equipo (45 s)
 
 - **Script de aceptación:** `pruebas/aceptacion_feature2.py` con `urllib`, sin pytest ni mocks.
-  **28 escenarios**, cada uno imprime escenario, esperado, obtenido y PASÓ/FALLÓ. Mostrar el
-  `28/28` de la salida guardada.
+  **27 escenarios** (el plan dice 28; el script tiene 27), cada uno imprime escenario, esperado,
+  obtenido y PASÓ/FALLÓ. Mostrar el `27/27` de la salida real.
 - **Regresión:** la Feature 1 sigue en **33/33**.
 - **Errores cubiertos:** 400 `dato_invalido`, 400 `formato_incorrecto`, 404 `punto_inexistente`,
   404 `red_vacia`.
@@ -165,7 +165,7 @@ trayectos, no el más barato. A `PR-ESTACION`: directo = 1 trayecto/30 min; por 
 
 - [ ] Registrado quién expone (nadie repite hasta que todos hayan expuesto).
 - [ ] Backend con `--ejemplo` y frontend levantados; imagen de cobertura carga.
-- [ ] `aceptacion_feature2.py` ejecutado y salida a mano (28/28).
+- [ ] `aceptacion_feature2.py` ejecutado y salida guardada a mano (27/27).
 - [ ] Video de respaldo de máximo 3 min listo.
 - [ ] Nombres y enlaces de PR en el bloque 6.
 - [ ] Ensayo cronometrado: no pasar de 7 minutos.
