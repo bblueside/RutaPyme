@@ -1,3 +1,4 @@
 .env
 skills-lock.json
 .claude/launch.json
+backend/__pycache__
