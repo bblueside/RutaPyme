@@ -11,7 +11,7 @@ veces envía pedidos por conexiones cerradas. Esta herramienta modela su red com
 | Feature | Estado | Descripción |
 |---------|--------|-------------|
 | 1 · Red operativa inicial | ✅ Completa | Registrar y consultar puntos y trayectos |
-| 2 · Cobertura de entregas | 🚧 En integración | ¿Qué destinos alcanzo desde una bodega? Backend, API e interfaz listos; falta cerrar PR |
+| 2 · Cobertura de entregas | ✅ Completa | ¿Qué destinos alcanzo desde una bodega? Backend, API e interfaz listos |
 | 3 · Ruta de menor costo | ⏳ Pendiente | Ruta más barata entre dos puntos |
 | 4 · Operación demostrable | ⏳ Pendiente | Integración, cambio de requisito y demo |
 
@@ -19,7 +19,7 @@ veces envía pedidos por conexiones cerradas. Esta herramienta modela su red com
 
 ## 1. Instalación
 
-Requisitos: **Python 3.12 o superior** y Git.
+Requisitos: **Python 3.12 o superior**, **Node.js 20 o superior** (solo para el frontend) y Git.
 
 ```bash
 git clone <URL-del-repositorio>
@@ -57,12 +57,25 @@ en esa misma dirección, como respaldo.
 
 ### Frontend (landing y panel)
 
-En otra terminal, con el backend encendido:
+En otra terminal, con el backend encendido. La primera vez instala las dependencias:
 
 ```bash
 cd frontend
 npm install
+```
+
+Para encender el frontend (las siguientes veces basta con este comando):
+
+```bash
 npm run dev
+```
+
+Otros comandos útiles, desde `frontend/`:
+
+```bash
+npm run lint      # revisa el código con ESLint
+npm run build     # comprueba tipos y genera el build de producción
+npm run preview   # sirve el build de producción localmente
 ```
 
 Abrir **http://localhost:5173** (landing) y **http://localhost:5173/app** (panel). Vite reenvía `/api` al
