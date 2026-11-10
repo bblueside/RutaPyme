@@ -12,7 +12,7 @@ veces envía pedidos por conexiones cerradas. Esta herramienta modela su red com
 |---------|--------|-------------|
 | 1 · Red operativa inicial | ✅ Completa | Registrar y consultar puntos y trayectos |
 | 2 · Cobertura de entregas | ✅ Completa | ¿Qué destinos alcanzo desde una bodega? Backend, API e interfaz listos |
-| 3 · Ruta de menor costo | ⏳ Pendiente | Ruta más barata entre dos puntos |
+| 3 · Ruta de menor costo | 🟡 Backend completo | Ruta más barata entre dos puntos (Dijkstra). API y pruebas listas; interfaz pendiente |
 | 4 · Operación demostrable | ⏳ Pendiente | Integración, cambio de requisito y demo |
 
 ---
@@ -95,6 +95,7 @@ Con el servidor encendido, en otra terminal:
 ```bash
 python pruebas/aceptacion_feature1.py
 python pruebas/aceptacion_feature2.py
+python pruebas/aceptacion_feature3.py
 ```
 
 Los scripts usan solo `urllib`, vacían la red al empezar (se pueden repetir) y por cada escenario imprimen
@@ -104,6 +105,9 @@ Los scripts usan solo `urllib`, vacían la red al empezar (se pueden repetir) y 
   inválidos, errores de la API, imagen y datos de ejemplo). Última salida:
   [`pruebas/salidas/aceptacion_feature1.txt`](pruebas/salidas/aceptacion_feature1.txt) → **33/33 aprobados**.
 - **Feature 2:** cobertura desde una bodega, verificación origen → destino, puntos aislados, ciclos y errores.
+- **Feature 3:** 32 escenarios: ruta de menor costo, comparación con la de menos saltos, ruta inexistente,
+  nodo inexistente, costos inválidos, ciclos e imagen. Última salida:
+  [`pruebas/salidas/aceptacion_feature3.txt`](pruebas/salidas/aceptacion_feature3.txt) → **32/32 aprobados**.
 - **Panel web:** checklist manual en [`pruebas/prueba_manual_panel.md`](pruebas/prueba_manual_panel.md).
 
 ## 4. Endpoints de la API REST
@@ -122,6 +126,8 @@ Los scripts usan solo `urllib`, vacían la red al empezar (se pueden repetir) y 
 | GET | `/api/red/imagen/cobertura/{origen}` | — | 200 PNG con la cobertura de `origen` resaltada · 404 |
 | GET | `/api/cobertura/{origen}` | — | 200 puntos alcanzables y no alcanzables, saltos y recorrido · 400 · 404 |
 | GET | `/api/cobertura/{origen}/{destino}` | — | 200 `alcanzable` (sí/no), camino y explicación · 404 |
+| GET | `/api/ruta/{origen}/{destino}` | — | 200 ruta de menor costo: `camino`, `costo_total`, `tramos`, comparación con la de menos saltos y traza; `existe_ruta: false` con explicación si no hay ruta · 400 · 404 |
+| GET | `/api/red/imagen/ruta/{origen}/{destino}` | — | 200 PNG con la ruta de menor costo resaltada · 404 |
 | POST | `/api/red/ejemplo` | — | 201 carga la red sintética |
 | DELETE | `/api/red` | — | 200 vacía la red |
 
@@ -162,6 +168,11 @@ Detalle completo en [`docs/feature-1/modelado.md`](docs/feature-1/modelado.md).
 - **Cobertura (Feature 2):** recorrido **por capas (BFS) propio** sobre la lista de adyacencia, en
   O(V + E). Respeta el sentido de los trayectos y explica por qué un punto no es alcanzable. Detalle en
   [`docs/feature-2/modelado.md`](docs/feature-2/modelado.md).
+- **Ruta de menor costo (Feature 3):** algoritmo de **Dijkstra propio** con cola de prioridad (`heapq`) en
+  O((V + E) log V). Funciona porque todos los costos son > 0 (se valida al registrar y otra vez antes de
+  calcular). Para reconstruir la ruta se conserva el **predecesor** de cada punto. La respuesta compara la
+  ruta con la de menos saltos: `BOD-CENTRO → PR-ESTACION` directo tiene 1 salto pero cuesta 30 min, y por
+  `BAR-SUR` tiene 2 saltos y cuesta 18. Detalle en [`docs/feature-3/modelado.md`](docs/feature-3/modelado.md).
 - **Sin frameworks en el backend:** API con `http.server` de la biblioteca estándar. El frontend (React +
   TypeScript con Vite) es un acuerdo del equipo y consume la API real.
 
@@ -170,6 +181,10 @@ Detalle completo en [`docs/feature-1/modelado.md`](docs/feature-1/modelado.md).
 Cobertura desde `BOD-CENTRO` resaltada:
 
 ![Cobertura de BOD-CENTRO](docs/img/cobertura-bod-centro.png)
+
+Ruta de menor costo de `BOD-CENTRO` a `PR-ESTACION` resaltada:
+
+![Ruta de menor costo BOD-CENTRO → PR-ESTACION](docs/img/ruta-bod-centro-pr-estacion.png)
 
 ## 6. Reglas de la guía técnica y cómo se cumplen
 
@@ -181,7 +196,7 @@ Cobertura desde `BOD-CENTRO` resaltada:
 | NetworkX solo para visualizar | Solo se importa en [`backend/visualizacion.py`](backend/visualizacion.py), que copia la red ya validada para dibujarla. `matplotlib` es el motor que NetworkX usa para producir la imagen |
 | Frontend consume el backend real | [`frontend/src/services/`](frontend/src/services/) usa `fetch('/api/...')` (React + TypeScript + Vite) |
 | Datos sintéticos | [`datos/red_ejemplo.json`](datos/red_ejemplo.json) (nombres inventados) |
-| Pruebas sin frameworks | [`pruebas/aceptacion_feature1.py`](pruebas/aceptacion_feature1.py) y [`aceptacion_feature2.py`](pruebas/aceptacion_feature2.py) con `urllib` |
+| Pruebas sin frameworks | [`pruebas/aceptacion_feature1.py`](pruebas/aceptacion_feature1.py), [`aceptacion_feature2.py`](pruebas/aceptacion_feature2.py) y [`aceptacion_feature3.py`](pruebas/aceptacion_feature3.py) con `urllib` |
 
 ## Documentación
 
@@ -193,6 +208,9 @@ Cobertura desde `BOD-CENTRO` resaltada:
 | [Bitácora de IA F1](docs/ia/bitacora-feature-1.md) | Propuestas de la IA, decisión y verificación |
 | [Especificación F2](docs/feature-2/especificacion.md) | Cobertura: historias, reglas, criterios y contrato de la API |
 | [Modelado F2](docs/feature-2/modelado.md) · [Plan F2](docs/feature-2/plan.md) · [Pitch F2](docs/feature-2/pitch.md) | Recorrido BFS, tareas y presentación |
+| [Especificación F3](docs/feature-3/especificacion.md) | Ruta de menor costo: historias, reglas, criterios y contrato de la API |
+| [Modelado F3](docs/feature-3/modelado.md) · [Plan F3](docs/feature-3/plan.md) | Dijkstra, trazas con dos caminos de distinto costo y tareas |
+| [Bitácora de IA F3](docs/ia/bitacora-feature-3.md) | Propuestas de la IA en el backend de la ruta |
 | [Plan del frontend](docs/frontend/plan.md) · [Plan de diseño](docs/frontend/plan-diseno.md) | Arquitectura del panel y bocetos |
 | [Bitácora de IA frontend](docs/ia/bitacora-frontend.md) · [landing](docs/ia/bitacora-landing.md) | Propuestas de la IA en la interfaz |
 
