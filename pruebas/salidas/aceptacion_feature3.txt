@@ -1,0 +1,116 @@
+Pruebas de aceptación · Feature 3 · RutaPyme
+API: http://127.0.0.1:8765
+
+=== Red vacía ===
+[PASÓ] 01. Ruta con la red vacía
+        Esperado: 404 red_vacia
+        Obtenido: 404 red_vacia — «La red está vacía: registre puntos y conexiones (o cargue la red de ejemplo) antes de consultar la cobertura o una ruta.»
+
+=== Escenario normal de negocio: ruta de menor costo ===
+[PASÓ] 02. Ruta de menor costo de la bodega a PR-ESTACION
+        Esperado: 200, existe_ruta, BOD-CENTRO → BAR-SUR → PR-ESTACION, costo 18, 2 saltos
+        Obtenido: 200, existe_ruta=True, BOD-CENTRO → BAR-SUR → PR-ESTACION, costo 18, 2 saltos
+[PASÓ] 03. Tramos con costo acumulado
+        Esperado: [8, 18]
+        Obtenido: [8, 18]
+[PASÓ] 04. Menos saltos no es menor costo: el directo tiene 1 salto pero cuesta 30 (12 más)
+        Esperado: camino BOD-CENTRO → PR-ESTACION, 1 salto, costo 30, diferencia 12
+        Obtenido: camino BOD-CENTRO → PR-ESTACION, 1 salto(s), costo 30, diferencia 12
+[PASÓ] 05. La cobertura (Feature 2) sigue respondiendo con el camino de menos trayectos
+        Esperado: camino BOD-CENTRO → PR-ESTACION (BFS no se modificó)
+        Obtenido: camino BOD-CENTRO → PR-ESTACION
+[PASÓ] 06. Orden en que Dijkstra vuelve definitivos los puntos (de menor a mayor costo)
+        Esperado: BOD-CENTRO → BAR-SUR → BAR-NORTE → BAR-ORIENTE → PR-ESTACION
+        Obtenido: BOD-CENTRO → BAR-SUR → BAR-NORTE → BAR-ORIENTE → PR-ESTACION
+[PASÓ] 07. Traza: al cerrar BAR-SUR se mejora PR-ESTACION de 30 a 18 (relajación)
+        Esperado: paso 2 definitivo BAR-SUR (8), PR-ESTACION: 30 → 18
+        Obtenido: paso 2 definitivo BAR-SUR (8), PR-ESTACION: (30, 18)
+[PASÓ] 08. Cuando la de menos saltos también es la más barata, se informa
+        Esperado: 200, BOD-CENTRO → BAR-SUR → BAR-ORIENTE, costo 14, diferencia 0
+        Obtenido: 200, BOD-CENTRO → BAR-SUR → BAR-ORIENTE, costo 14, diferencia 0
+[PASÓ] 09. Ruta de 2 trayectos por BAR-NORTE
+        Esperado: 200, BOD-CENTRO → BAR-NORTE → PR-PARQUE, costo 19
+        Obtenido: 200, BOD-CENTRO → BAR-NORTE → PR-PARQUE, costo 19
+[PASÓ] 10. Origen y destino en minúsculas se normalizan
+        Esperado: 200, BOD-CENTRO → PR-ESTACION con costo 18
+        Obtenido: 200, BOD-CENTRO → PR-ESTACION con costo 18
+[PASÓ] 11. Origen igual al destino
+        Esperado: 200, existe_ruta, camino [BAR-SUR], costo 0, 0 saltos
+        Obtenido: 200, existe_ruta=True, camino ['BAR-SUR'], costo 0, 0 saltos
+
+=== Ciclos ===
+[PASÓ] 12. Ruta que pasa por el ciclo BAR-NORTE ⇄ BOD-CENTRO (15 + 8 = 23, no 7 + 9 + 11 = 27)
+        Esperado: 200, BAR-NORTE → BOD-CENTRO → BAR-SUR, costo 23
+        Obtenido: 200, BAR-NORTE → BOD-CENTRO → BAR-SUR, costo 23
+[PASÓ] 13. Los ciclos no repiten puntos definitivos
+        Esperado: cada punto aparece una sola vez
+        Obtenido: BAR-NORTE → PR-PARQUE → BOD-CENTRO → BAR-ORIENTE → BAR-SUR
+
+=== Ruta inexistente ===
+[PASÓ] 14. Destino sin trayectos de entrada
+        Esperado: 200, existe_ruta=False y explicación sobre la falta de entradas
+        Obtenido: 200, existe_ruta=False, «Ningún trayecto llega a PR-LAGUNA (no tiene conexiones de entrada): no se puede alcanzar desde ningún punto de la red.»
+[PASÓ] 15. Dirección: de BAR-SUR no se puede llegar a BAR-NORTE
+        Esperado: 200, existe_ruta=False explicando que a BAR-NORTE solo se llega desde BOD-CENTRO
+        Obtenido: 200, existe_ruta=False, «A BAR-NORTE solo llegan trayectos desde BOD-CENTRO, y ninguno de esos puntos es alcanzable desde BAR-SUR. Desde BAR-SUR solo se cubre: BAR-ORIENTE, PR-ESTACION. Recuerde que la red es dirigida: A→B no permite B→A.»
+[PASÓ] 16. Origen sin trayectos de salida
+        Esperado: 200, existe_ruta=False explicando que no tiene salidas
+        Obtenido: 200, existe_ruta=False, «PR-ESTACION no tiene trayectos de salida registrados, así que no puede llegar a ningún punto.»
+
+=== Nodo inexistente y formato incorrecto ===
+[PASÓ] 17. Origen inexistente
+        Esperado: 404 punto_inexistente
+        Obtenido: 404 punto_inexistente — «El punto de origen 'BOD-NORTE' no existe. Regístrelo primero.»
+[PASÓ] 18. Destino inexistente
+        Esperado: 404 punto_inexistente
+        Obtenido: 404 punto_inexistente — «El punto de destino 'BAR-OESTE' no existe. Regístrelo primero.»
+[PASÓ] 19. Origen con formato inválido (espacio interno)
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El campo 'origen' debe tener de 1 a 30 caracteres: letras sin tilde, números, '-' o '_', sin espacios. Ejemplo: BOD-CENTRO.»
+[PASÓ] 20. Consulta sin origen ni destino
+        Esperado: 400 formato_incorrecto
+        Obtenido: 400 formato_incorrecto — «Indique el origen y el destino en la ruta: /api/ruta/{origen}/{destino}.»
+[PASÓ] 21. Consulta sin destino
+        Esperado: 400 formato_incorrecto
+        Obtenido: 400 formato_incorrecto — «Falta el destino. Use /api/ruta/BOD-CENTRO/{destino}.»
+[PASÓ] 22. Método no permitido en la ruta
+        Esperado: 405 metodo_no_permitido
+        Obtenido: 405 metodo_no_permitido — «POST no está permitido en /api/ruta/BOD-CENTRO/PR-ESTACION. Use: GET.»
+
+=== Costo inválido: condición de Dijkstra (costos mayores que 0) ===
+[PASÓ] 23. Costo negativo que abarataría una ruta (-20) se rechaza
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El costo debe ser un número mayor que 0 (minutos). Se recibió -20.»
+[PASÓ] 24. Costo cero se rechaza
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El costo debe ser un número mayor que 0 (minutos). Se recibió 0.»
+[PASÓ] 25. Costo que no es número se rechaza
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El costo debe ser un número (por ejemplo 12 o 7.5), no 'doce'.»
+[PASÓ] 26. Los costos rechazados no cambiaron la ruta
+        Esperado: 200, costo 19 por BAR-NORTE
+        Obtenido: 200, costo 19 por BOD-CENTRO → BAR-NORTE → PR-PARQUE
+[PASÓ] 27. Las consultas de ruta no modificaron la red
+        Esperado: 7 puntos y 10 conexiones
+        Obtenido: 7 puntos y 10 conexiones
+
+=== La ruta se recalcula cuando cambia la red ===
+[PASÓ] 28. Al registrar BAR-SUR → PR-LAGUNA aparece la ruta que antes no existía
+        Esperado: 200, existe_ruta, BOD-CENTRO → BAR-SUR → PR-LAGUNA, costo 12
+        Obtenido: 200, existe_ruta=True, BOD-CENTRO → BAR-SUR → PR-LAGUNA, costo 12
+[PASÓ] 29. Costos decimales: 2.5 + 2.5 = 5 gana a 7.5 directo
+        Esperado: 200, BOD-A → BAR-X → PR-Y, costo 5
+        Obtenido: 200, BOD-A → BAR-X → PR-Y, costo 5.0
+
+=== Visualización del resultado ===
+[PASÓ] 30. Imagen de la ruta dibujada con NetworkX a partir de nuestro Dijkstra
+        Esperado: 200 con firma PNG
+        Obtenido: 200 con firma PNG=True
+[PASÓ] 31. Imagen cuando no existe ruta (solo marca origen y destino)
+        Esperado: 200 con firma PNG
+        Obtenido: 200 con firma PNG=True
+[PASÓ] 32. Imagen de ruta con destino inexistente
+        Esperado: 404 punto_inexistente
+        Obtenido: 404 punto_inexistente — «El punto de destino 'NO-EXISTE' no existe. Regístrelo primero.»
+
+Resultado: 32/32 escenarios aprobados.
