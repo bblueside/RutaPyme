@@ -7,6 +7,8 @@ Este módulo no sabe nada de HTTP: solo guarda la red y aplica las reglas del do
 descritas en docs/feature-1/especificacion.md (reglas R-01 a R-07).
 La cobertura de entregas (Feature 2) es un recorrido por capas (BFS) propio, descrito en
 docs/feature-2/especificacion.md (reglas R-09 a R-14).
+La ruta de menor costo (Feature 3) es un algoritmo de Dijkstra propio con cola de prioridad
+(heapq), descrito en docs/feature-3/especificacion.md (reglas R-16 a R-23).
 """
 
 import math
@@ -397,4 +399,21 @@ class RedOperativa:
     def _exigir_red_con_puntos(self):
         if not self._tipos:
             raise RedVacia("La red está vacía: registre puntos y conexiones (o cargue la red de ejemplo) "
-                           "antes de consultar la cobertura.")
+                           "antes de consultar la cobertura o una ruta.")
+
+    def _exigir_costos_positivos(self):
+        """R-18: Dijkstra solo da la respuesta correcta si todos los costos son mayores que 0. O(E).
+
+        agregar_conexion ya lo garantiza al registrar; aquí se verifica otra vez porque es la
+        condición de la que depende la corrección del algoritmo.
+        """
+        for origen, salidas in self._adyacencia.items():
+            for destino, costo in salidas.items():
+                try:
+                    validar_costo(costo)
+                except ErrorRed:
+                    raise DatoInvalido(
+                        f"El trayecto {origen} → {destino} tiene un costo inválido ({costo!r}). "
+                        "La ruta de menor costo usa Dijkstra, que solo funciona con costos mayores que 0: "
+                        "corrija la conexión antes de pedir una ruta."
+                    ) from None
