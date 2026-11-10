@@ -2,8 +2,8 @@
 
 También sirve los archivos de la interfaz web (carpeta frontend/legacy/), así que API e interfaz
 viven en el mismo servidor y la interfaz consume la API real.
-Contrato de endpoints: docs/feature-1/especificacion.md (sección 5) y
-docs/feature-2/especificacion.md (sección 5).
+Contrato de endpoints: docs/feature-1/especificacion.md, docs/feature-2/especificacion.md y
+docs/feature-3/especificacion.md (sección 5 de cada una).
 """
 
 import json
@@ -52,10 +52,14 @@ RUTAS = [
     ("DELETE", "/api/red", "vaciar_red"),
     ("GET", "/api/red/imagen", "ver_imagen"),
     ("GET", "/api/red/imagen/cobertura/{origen}", "ver_imagen_cobertura"),
+    ("GET", "/api/red/imagen/ruta/{origen}/{destino}", "ver_imagen_ruta"),
     ("POST", "/api/red/ejemplo", "cargar_ejemplo"),
     ("GET", "/api/cobertura", "cobertura_sin_origen"),
     ("GET", "/api/cobertura/{origen}", "consultar_cobertura"),
     ("GET", "/api/cobertura/{origen}/{destino}", "verificar_cobertura"),
+    ("GET", "/api/ruta", "ruta_sin_parametros"),
+    ("GET", "/api/ruta/{origen}", "ruta_sin_destino"),
+    ("GET", "/api/ruta/{origen}/{destino}", "consultar_ruta"),
 ]
 
 
@@ -165,7 +169,7 @@ class ManejadorRutaPyme(BaseHTTPRequestHandler):
         return self.server.red
 
     def salud(self):
-        self._enviar_json(200, {"estado": "ok", "servicio": "RutaPyme API", "feature": 2})
+        self._enviar_json(200, {"estado": "ok", "servicio": "RutaPyme API", "feature": 3})
 
     def listar_tipos(self):
         self._enviar_json(200, {"tipos": list(TIPOS_PUNTO)})
@@ -220,6 +224,15 @@ class ManejadorRutaPyme(BaseHTTPRequestHandler):
     def verificar_cobertura(self, origen, destino):
         self._enviar_json(200, self.red.verificar_cobertura(origen, destino))
 
+    def ruta_sin_parametros(self):
+        raise FormatoIncorrecto("Indique el origen y el destino en la ruta: /api/ruta/{origen}/{destino}.")
+
+    def ruta_sin_destino(self, origen):
+        raise FormatoIncorrecto(f"Falta el destino. Use /api/ruta/{origen}/{{destino}}.")
+
+    def consultar_ruta(self, origen, destino):
+        self._enviar_json(200, self.red.ruta_menor_costo(origen, destino))
+
     def ver_imagen(self):
         if not self._visualizacion_disponible():
             return
@@ -231,6 +244,13 @@ class ManejadorRutaPyme(BaseHTTPRequestHandler):
         if not self._visualizacion_disponible():
             return
         self._enviar(200, visualizacion.dibujar_red(self.red, cobertura), "image/png")
+
+    def ver_imagen_ruta(self, origen, destino):
+        # Nuestro Dijkstra calcula la ruta (y valida origen, destino y costos); NetworkX solo la pinta.
+        ruta = self.red.ruta_menor_costo(origen, destino)
+        if not self._visualizacion_disponible():
+            return
+        self._enviar(200, visualizacion.dibujar_red(self.red, ruta=ruta), "image/png")
 
     def _visualizacion_disponible(self):
         if not visualizacion.DISPONIBLE:
