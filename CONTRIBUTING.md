@@ -1,6 +1,6 @@
 # Cómo trabajamos en el repositorio
 
-Equipo 7: **Emmanuel Cardona**, **Sebastian Ramirez**, **Juliana Velandia**, **Melany Herrera**.
+Equipo 7: **Emmanuel Cardona**, **Sebastian Ramirez**, **Juliana Velandia**.
 
 ## Flujo de trabajo
 1. Se crea una rama desde `main`:
@@ -23,6 +23,6 @@ Equipo 7: **Emmanuel Cardona**, **Sebastian Ramirez**, **Juliana Velandia**, **M
 ## Antes de hacer merge
 
 - [ ] El servidor arranca con `python main.py`.
-- [ ] `python pruebas/aceptacion_feature1.py` termina con todos los escenarios en PASÓ.
+- [ ] `python pruebas/aceptacion_feature1.py`, `aceptacion_feature2.py` y `aceptacion_feature3.py` terminan con todos los escenarios en PASÓ.
 - [ ] No hay bibliotecas nuevas fuera de `requirements.txt`.
 - [ ] README y bitácora de IA actualizados.
