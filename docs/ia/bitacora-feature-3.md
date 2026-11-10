@@ -1,0 +1,20 @@
+# Bitácora de IA — Feature 3 (Ruta de menor costo · backend)
+
+Herramienta: **Claude Code**, con el arnés `CLAUDE.md`, las skills `sdd-feature` y
+`prueba-aceptacion` y los agentes `revisor-reglas` y `trazador-grafos`.
+
+> Cada integrante debe poder explicar cada fila. Si una fila no se entiende, no se entrega.
+
+| # | Decisión o pieza | Herramienta / objetivo de IA | Propuesta recibida | Acepté o rechacé y por qué | Cómo la verifiqué |
+|---|------------------|------------------------------|--------------------|----------------------------|-------------------|
+| 1 | Algoritmo de ruta | Claude Code · comparar algoritmos de camino más corto | Dijkstra con montículo, frente a Bellman-Ford, Floyd-Warshall y reutilizar el BFS | **Aceptado Dijkstra.** Los costos son > 0 (R-05), es el más rápido para un origen, y el BFS cuenta saltos, no minutos | Tabla comparativa en `modelado.md` (sección 2) y escenarios 02–04 del script |
+| 2 | Reutilizar el BFS para la ruta | Claude Code · reducir código | Agregar costos al BFS de la Feature 2 y devolver "la ruta" desde ahí | **Rechazada.** El brief pide no mezclar cobertura y ruta "porque el algoritmo ya estaba ahí"; el BFS daría 30 min en vez de 18 | Escenario 05: la cobertura sigue devolviendo el camino de 1 salto |
+| 3 | Cola de prioridad | Claude Code · estructura auxiliar | Usar `queue.PriorityQueue` | **Modificada:** se usa `heapq` (también biblioteca estándar). `PriorityQueue` agrega candados entre hilos que aquí no se necesitan porque la API ya protege la red con su propio candado | Revisión de `backend/red.py` y del candado en `backend/api.py` |
+| 4 | Actualizar costos en el montículo | Claude Code · implementación | Buscar y cambiar la entrada del punto dentro del montículo (*decrease-key*) | **Rechazada.** Con `heapq` eso cuesta O(V) por cambio. Se usa **eliminación perezosa**: se agrega otra entrada y la vieja se ignora al salir | Traza en `modelado.md`: la entrada `(30, PR-ESTACION)` nunca se usa |
+| 5 | Dato para reconstruir la ruta | Claude Code · reconstrucción | Guardar el camino completo de cada punto en el montículo | **Rechazada.** Copiar listas cuesta memoria O(V) por entrada. Se guarda solo el **predecesor** (`llega_desde`) y se reutiliza `_reconstruir_camino` de la Feature 2 | Escenarios 02 y 03 (camino y tramos acumulados) |
+| 6 | Desempate | Claude Code · traza reproducible | Tuplas `(costo, punto)` en el montículo | **Modificada:** `(costo, orden de llegada, punto)`. Con `(costo, punto)` los empates se resolvían por orden alfabético y la traza no seguía el orden de registro de las conexiones como en la Feature 2 | Ejecutar dos veces la misma consulta da la misma traza |
+| 7 | Validación de costos | Claude Code · cumplir "validar que los costos cumplan las condiciones del algoritmo" | Confiar solo en la validación al registrar | **Modificada:** además se verifica cada costo antes de ejecutar Dijkstra (`_exigir_costos_positivos`), dejando escrito en el código de qué depende la corrección | Comando de consola de `plan.md` (CA-44) y escenarios 23–26 del script |
+| 8 | Ruta inexistente | Claude Code · respuesta HTTP | Responder 404 cuando no hay ruta | **Rechazada.** No es un error del usuario sino una respuesta sobre la red, igual que en la Feature 2: 200 con `existe_ruta: false` y explicación | Escenarios 14–16 |
+| 9 | Evidenciar "menos saltos ≠ menor costo" | Claude Code · diseño de la respuesta | Solo explicarlo en la documentación | **Modificada:** además la API devuelve `comparacion_menos_saltos` con el camino BFS, su costo y la diferencia, para que el despachador lo vea en cada consulta | Escenarios 04 y 08 |
+| 10 | Imagen de la ruta | Claude Code · visualización | Calcular la ruta con `nx.dijkstra_path` para dibujarla | **Rechazada:** viola la regla de NetworkX solo para dibujar. Nuestro Dijkstra calcula y NetworkX recibe el resultado ya calculado | Escenarios 30–32 y revisión de `backend/visualizacion.py` (no llama algoritmos de NetworkX) |
+    
