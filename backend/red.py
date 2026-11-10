@@ -11,6 +11,7 @@ La ruta de menor costo (Feature 3) es un algoritmo de Dijkstra propio con cola d
 (heapq), descrito en docs/feature-3/especificacion.md (reglas R-16 a R-23).
 """
 
+import heapq
 import math
 import re
 from collections import deque
@@ -389,6 +390,166 @@ class RedOperativa:
         return (f"A {destino} solo llegan trayectos desde {', '.join(entradas)}, y ninguno de esos puntos "
                 f"es alcanzable desde {origen}. Desde {origen} solo se cubre: {cubiertos}. "
                 "Recuerde que la red es dirigida: A→B no permite B→A.")
+
+    # --- Ruta de menor costo (Feature 3) ----------------------------------
+
+    def ruta_menor_costo(self, origen, destino):
+        """R-16 a R-23: ruta de menor costo total de `origen` a `destino` y su comparación con la de menos trayectos."""
+        origen = normalizar_id(origen, "origen")
+        destino = normalizar_id(destino, "destino")
+        self._exigir_red_con_puntos()
+        self._exigir_punto(origen, "El punto de origen")
+        self._exigir_punto(destino, "El punto de destino")
+        self._exigir_costos_positivos()
+
+        busqueda = self._buscar_menor_costo(origen, destino)
+        respuesta = {
+            "origen": {"id": origen, "tipo": self._tipos[origen]},
+            "destino": {"id": destino, "tipo": self._tipos[destino]},
+            "algoritmo": "Dijkstra propio con cola de prioridad (heapq) sobre la lista de adyacencia",
+        }
+
+        if destino in busqueda["costo_acumulado"]:
+            camino = self._reconstruir_camino(busqueda["llega_desde"], destino)
+            costo_total = busqueda["costo_acumulado"][destino]
+            saltos = len(camino) - 1
+            if saltos == 0:
+                mensaje = f"{destino} es el mismo punto de origen: costo 0, sin hacer ningún trayecto."
+            else:
+                mensaje = (f"La ruta de menor costo de {origen} a {destino} cuesta {costo_total:g} min "
+                           f"en {saltos} {'trayecto' if saltos == 1 else 'trayectos'}.")
+            respuesta.update({
+                "existe_ruta": True,
+                "mensaje": mensaje,
+                "camino": camino,
+                "costo_total": costo_total,
+                "saltos": saltos,
+                "tramos": self._tramos_del_camino(camino),
+                "comparacion_menos_saltos": self._comparar_con_menos_saltos(origen, destino, camino, costo_total),
+            })
+        else:
+            respuesta.update({
+                "existe_ruta": False,
+                "mensaje": f"No existe ruta de {origen} a {destino}.",
+                "explicacion": self._explicar_no_alcanzable(origen, destino, busqueda["orden_definitivos"]),
+            })
+
+        respuesta.update({
+            "orden_definitivos": busqueda["orden_definitivos"],
+            "costos_definitivos": busqueda["costo_acumulado"],
+            "traza": busqueda["traza"],
+        })
+        return respuesta
+
+    def _buscar_menor_costo(self, origen, destino):
+        """Algoritmo de Dijkstra propio. O((V + E) log V) en tiempo y O(V + E) en memoria extra.
+
+        costo_acumulado[p] es el menor costo conocido para llegar a p desde el origen.
+        llega_desde[p] es el punto anterior en ese camino: es el dato que se conserva para
+        reconstruir la ruta (predecesor).
+        Un punto se vuelve DEFINITIVO cuando sale del montículo: como todos los costos son
+        mayores que 0, ningún camino que pase por puntos pendientes puede abaratarlo después.
+        Al mejorar un costo no se borra la entrada vieja del montículo; se ignora cuando sale
+        porque el punto ya es definitivo (eliminación perezosa).
+        """
+        costo_acumulado = {origen: 0}
+        llega_desde = {origen: None}
+        definitivos = set()
+        orden_definitivos = []
+        # (costo acumulado, orden de llegada, punto). El orden de llegada desempata costos
+        # iguales de forma reproducible, igual que el BFS respeta el orden de registro.
+        monticulo = [(0, 0, origen)]
+        llegadas = 1
+        traza = []
+
+        while monticulo:
+            costo, _, actual = heapq.heappop(monticulo)   # O(log V)
+            if actual in definitivos:
+                continue  # entrada vieja: ya se encontró un costo menor para este punto
+            definitivos.add(actual)
+            orden_definitivos.append(actual)
+
+            mejorados, descartados = [], []
+            if actual != destino:
+                for vecino, costo_trayecto in self._adyacencia[actual].items():  # O(grado(actual))
+                    if vecino in definitivos:
+                        descartados.append({"punto": vecino, "motivo": "ya es definitivo"})
+                        continue
+                    nuevo = costo + costo_trayecto
+                    anterior = costo_acumulado.get(vecino)
+                    if anterior is None or nuevo < anterior:   # relajación del trayecto actual → vecino
+                        costo_acumulado[vecino] = nuevo
+                        llega_desde[vecino] = actual
+                        heapq.heappush(monticulo, (nuevo, llegadas, vecino))
+                        llegadas += 1
+                        mejorados.append({"punto": vecino, "antes": anterior, "ahora": nuevo})
+                    else:
+                        descartados.append({"punto": vecino,
+                                            "motivo": f"{costo:g} + {costo_trayecto:g} = {nuevo:g} no mejora {anterior:g}"})
+
+            traza.append({
+                "paso": len(traza) + 1,
+                "definitivo": actual,
+                "costo": costo,
+                "mejora": mejorados,
+                "descarta": descartados,
+                "pendientes": [{"punto": punto, "costo": costo_pendiente}
+                               for costo_pendiente, _, punto in sorted(monticulo)
+                               if punto not in definitivos and costo_acumulado[punto] == costo_pendiente],
+                "decision": self._decision_de_relajacion(actual, costo, destino, mejorados, descartados),
+            })
+            if actual == destino:
+                break
+
+        # Solo los costos definitivos son respuestas seguras; los tentativos se quedan internos.
+        return {"costo_acumulado": {punto: costo_acumulado[punto] for punto in orden_definitivos},
+                "llega_desde": llega_desde, "orden_definitivos": orden_definitivos, "traza": traza}
+
+    @staticmethod
+    def _decision_de_relajacion(actual, costo, destino, mejorados, descartados):
+        if actual == destino:
+            return f"{actual} es el destino y su costo ({costo:g} min) ya es definitivo: fin de la búsqueda."
+        if not mejorados and not descartados:
+            return f"{actual} queda definitivo con {costo:g} min; no tiene salidas: no mejora ningún costo."
+        partes = []
+        if mejorados:
+            cambios = ", ".join(
+                f"{m['punto']} ({'∞' if m['antes'] is None else format(m['antes'], 'g')} → {m['ahora']:g})"
+                for m in mejorados)
+            partes.append(f"mejora {cambios}")
+        if descartados:
+            partes.append(f"no cambia {', '.join(d['punto'] for d in descartados)}")
+        return f"{actual} queda definitivo con {costo:g} min; " + "; ".join(partes) + "."
+
+    def _tramos_del_camino(self, camino):
+        """Cada trayecto del camino con su costo y el acumulado hasta ese punto. O(longitud del camino)."""
+        tramos = []
+        acumulado = 0
+        for origen, destino in zip(camino, camino[1:]):
+            costo = self._adyacencia[origen][destino]
+            acumulado += costo
+            tramos.append({"origen": origen, "destino": destino, "costo": costo, "acumulado": acumulado})
+        return tramos
+
+    def _comparar_con_menos_saltos(self, origen, destino, camino, costo_total):
+        """R-22: compara la ruta de menor costo con el camino de menos trayectos (BFS de la Feature 2). O(V + E)."""
+        camino_bfs = self._reconstruir_camino(self._recorrer_por_capas(origen)["llega_desde"], destino)
+        tramos_bfs = self._tramos_del_camino(camino_bfs)
+        costo_bfs = tramos_bfs[-1]["acumulado"] if tramos_bfs else 0
+        saltos_bfs = len(camino_bfs) - 1
+        diferencia = costo_bfs - costo_total
+
+        if camino_bfs == camino:
+            mensaje = "La ruta de menor costo también es la de menos trayectos."
+        elif math.isclose(costo_bfs, costo_total):
+            mensaje = (f"El camino con menos trayectos ({saltos_bfs}) cuesta lo mismo ({costo_bfs:g} min): "
+                       "las dos opciones empatan en costo.")
+        else:
+            mensaje = (f"El camino con menos trayectos ({saltos_bfs}) cuesta {costo_bfs:g} min: "
+                       f"{diferencia:g} min más que la ruta de menor costo ({len(camino) - 1} trayectos). "
+                       "Menos saltos no significa menor costo.")
+        return {"camino": camino_bfs, "saltos": saltos_bfs, "costo": costo_bfs,
+                "diferencia": diferencia, "mensaje": mensaje}
 
     # --- Apoyo ------------------------------------------------------------
 
