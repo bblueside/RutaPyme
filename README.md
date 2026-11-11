@@ -164,7 +164,7 @@ Detalle completo en [`docs/feature-1/modelado.md`](docs/feature-1/modelado.md).
 - **Representación principal: lista de adyacencia** `{punto: {destino: costo}}`. La operación que más
   harán los recorridos es "¿a dónde puedo ir desde aquí?": cuesta **O(grado)** en vez de **O(V)** con una
   matriz, y la memoria es **O(V + E)** en vez de **O(V²)**. El diccionario interno detecta duplicados en O(1).
-- **Validaciones** en el núcleo (`backend/red.py`), no en la interfaz: toda entrada pasa por las mismas reglas.
+- **Validaciones** en el núcleo (`backend/network.py`), no en la interfaz: toda entrada pasa por las mismas reglas.
 - **Cobertura (Feature 2):** recorrido **por capas (BFS) propio** sobre la lista de adyacencia, en
   O(V + E). Respeta el sentido de los trayectos y explica por qué un punto no es alcanzable. Detalle en
   [`docs/feature-2/modelado.md`](docs/feature-2/modelado.md).
@@ -192,8 +192,8 @@ Ruta de menor costo de `BOD-CENTRO` a `PR-ESTACION` resaltada:
 |-------|----------------|
 | Python 3.12+ con API REST | `http.server` + `json` (biblioteca estándar) |
 | Entorno virtual y `requirements.txt` | `.venv` + [`requirements.txt`](requirements.txt) |
-| Grafo y algoritmos propios | [`backend/red.py`](backend/red.py) no importa NetworkX |
-| NetworkX solo para visualizar | Solo se importa en [`backend/visualizacion.py`](backend/visualizacion.py), que copia la red ya validada para dibujarla. `matplotlib` es el motor que NetworkX usa para producir la imagen |
+| Grafo y algoritmos propios | [`backend/network.py`](backend/network.py) no importa NetworkX |
+| NetworkX solo para visualizar | Solo se importa en [`backend/visualization.py`](backend/visualization.py), que copia la red ya validada para dibujarla. `matplotlib` es el motor que NetworkX usa para producir la imagen |
 | Frontend consume el backend real | [`frontend/src/services/`](frontend/src/services/) usa `fetch('/api/...')` (React + TypeScript + Vite) |
 | Datos sintéticos | [`datos/red_ejemplo.json`](datos/red_ejemplo.json) (nombres inventados) |
 | Pruebas sin frameworks | [`pruebas/aceptacion_feature1.py`](pruebas/aceptacion_feature1.py), [`aceptacion_feature2.py`](pruebas/aceptacion_feature2.py) y [`aceptacion_feature3.py`](pruebas/aceptacion_feature3.py) con `urllib` |
@@ -211,6 +211,7 @@ Ruta de menor costo de `BOD-CENTRO` a `PR-ESTACION` resaltada:
 | [Especificación F3](docs/feature-3/especificacion.md) | Ruta de menor costo: historias, reglas, criterios y contrato de la API |
 | [Modelado F3](docs/feature-3/modelado.md) · [Plan F3](docs/feature-3/plan.md) | Dijkstra, trazas con dos caminos de distinto costo y tareas |
 | [Bitácora de IA F3](docs/ia/bitacora-feature-3.md) | Propuestas de la IA en el backend de la ruta |
+| [Código en inglés](docs/codigo-en-ingles.md) | Glosario de nombres antiguos (español) → nuevos (inglés) |
 | [Plan del frontend](docs/frontend/plan.md) · [Plan de diseño](docs/frontend/plan-diseno.md) | Arquitectura del panel y bocetos |
 | [Bitácora de IA frontend](docs/ia/bitacora-frontend.md) · [landing](docs/ia/bitacora-landing.md) | Propuestas de la IA en la interfaz |
 

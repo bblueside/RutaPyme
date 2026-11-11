@@ -19,6 +19,6 @@ Closes #
 ## Reglas de la guía técnica
 
 - [ ] El backend solo usa la biblioteca estándar de Python.
-- [ ] NetworkX solo se usa en `backend/visualizacion.py` para dibujar.
+- [ ] NetworkX solo se usa en `backend/visualization.py` para dibujar.
 - [ ] Datos sintéticos, sin datos personales reales.
 - [ ] Bitácora de IA actualizada si se usó IA.

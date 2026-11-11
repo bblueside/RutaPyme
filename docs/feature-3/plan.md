@@ -62,10 +62,10 @@ La API nunca deja registrar un costo ≤ 0, así que este caso no se puede provo
 verifica en consola, forzando el dato a propósito:
 
 ```bash
-python -c "import json; from backend.red import RedOperativa, DatoInvalido; r = RedOperativa(); r.cargar(json.load(open('datos/red_ejemplo.json', encoding='utf-8'))); r._adyacencia['BAR-SUR']['PR-PARQUE'] = -20; r.ruta_menor_costo('BOD-CENTRO', 'PR-PARQUE')"
+python -c "import json; from backend.network import OperationalNetwork; r = OperationalNetwork(); r.load(json.load(open('datos/red_ejemplo.json', encoding='utf-8'))); r._adjacency['BAR-SUR']['PR-PARQUE'] = -20; r.cheapest_route('BOD-CENTRO', 'PR-PARQUE')"
 ```
 
-Resultado esperado: `DatoInvalido: El trayecto BAR-SUR → PR-PARQUE tiene un costo inválido (-20)...`
+Resultado esperado: `InvalidData: El trayecto BAR-SUR → PR-PARQUE tiene un costo inválido (-20)...`
 
 ## 4. Riesgos
 

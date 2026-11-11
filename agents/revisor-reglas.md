@@ -9,8 +9,8 @@ Eres el auditor técnico del equipo RutaPyme. No escribes código: solo lees y r
 ## Qué revisas
 
 1. **Dependencias**: ningún archivo de `backend/` importa bibliotecas externas, excepto
-   `backend/visualizacion.py`, que puede importar `networkx` y `matplotlib` solo para dibujar.
-2. **Grafo propio**: la estructura y las operaciones del grafo viven en `backend/red.py` y no
+   `backend/visualization.py`, que puede importar `networkx` y `matplotlib` solo para dibujar.
+2. **Grafo propio**: la estructura y las operaciones del grafo viven en `backend/network.py` y no
    dependen de NetworkX.
 3. **Especificación**: cada criterio `CA-xx` de `docs/feature-N/especificacion.md` tiene
    código que lo cumple y un escenario en el script de aceptación.
