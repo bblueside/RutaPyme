@@ -36,3 +36,29 @@ contrastaron con el contrato real de la API (`backend/api.py`, `backend/red.py`)
 | 20 | Imagen de cobertura en la vista de ruta | Claude Code · implementación | Mostrarla también cuando el destino no es alcanzable | **Aceptada.** Es la imagen del origen; ayuda a explicar el veredicto | Revisión en el navegador |
 | 21 | Orden de "Capas" en una columna | Claude Code · implementación | Renderizar `BfsLayers` dos veces (izquierda en escritorio, tras las listas en móvil) con `pn-only-desktop` / `pn-only-mobile` | **Aceptada.** Respeta el orden de la sección 7 sin reordenar con CSS | Revisión a 390 px |
 | 22 | Reglas de React 19 del lint | Claude Code · implementación | Cargar datos con `.then(...)` en los efectos en lugar de funciones `async` que llaman a `setState` | **Aceptada.** `react-hooks/set-state-in-effect` lo exige | `npm run lint` |
+
+## Rediseño «Mi red de entregas» (2026-11-11)
+
+Sesión de preguntas por rondas (skill `grilling`) para pasar el panel de tres pestañas a una sola
+página fiel a las capturas del diseño actual, a `Guias.md` y al brief de identidad. Resultado:
+[`especificacion-mi-red.md`](../frontend/especificacion-mi-red.md) y
+[`plan-mi-red.md`](../frontend/plan-mi-red.md). Rama `feature/3-panel-mi-red`.
+
+| # | Decisión o pieza | Herramienta / objetivo de IA | Propuesta recibida | Acepté o rechacé y por qué | Cómo la verifiqué |
+|---|------------------|------------------------------|--------------------|----------------------------|-------------------|
+| 1 | Tarifa por minuto | Claude Code · contraste guía/contrato | Mostrar la tarifa que devuelve la API (200) aunque `Guias.md` pida 500 | **Aceptada.** No se modifica el backend; el cambio a 500 es otra tarea | `COST_PER_MINUTE_COP = 200` en `backend/network.py` |
+| 2 | Tailwind v4 | Claude Code · inventario del frontend | Mantener CSS propio (tokens + CSS Modules) | **Aceptada.** No está instalado; cambiar solo lo necesario | `frontend/package.json` sin Tailwind |
+| 3 | Página única | Claude Code · diseño | `/app` como única página; subrutas redirigen; landing intacta | **Aceptada** | `src/App.tsx`, `src/routes.ts` |
+| 4 | Mapa | Claude Code · diseño | SVG en el navegador con las `capas` de la API; PNG como enlace secundario | **Aceptada.** Reemplaza la fila 5 de la sesión anterior (PNG como vista principal). El frontend no ejecuta algoritmos | Regla 3 de `CLAUDE.md` |
+| 5 | Nombres de lugares | Claude Code · diseño | Diccionario solo para los 7 IDs de la red de ejemplo | **Aceptada** | `ID_PATTERN` no admite espacios ni tildes |
+| 6 | Funciones sin captura | Claude Code · cobertura de la API | Menú de demostración, detalle por fila, diálogos, ayuda, trazas desplegables | **Aceptada.** Todas las funciones del backend deben poder usarse desde el panel | Tabla §8 de la especificación contra `ROUTES` de `backend/api.py` |
+| 7 | Estados sin captura y móvil | Claude Code · diseño | Diseñarlos con el brief y aprobarlos con capturas | **Aceptada** | Pendiente (T13) |
+| 8 | Rama | Claude Code · flujo de trabajo | Rama a partir de `feature/3-adicion-costo` | **Modificada.** Nombre `feature/3-panel-mi-red` en lugar de `feature/4-panel-mi-red` | `git branch --show-current` |
+| 9 | Línea discontinua | Claude Code · diseño | Solo en «Mejor ruta», para la ruta de menos tramos | **Aceptada.** El color y el trazo nunca son decorativos (brief) | — |
+| 10 | Leyenda | Claude Code · diseño | Tres tipos separados en lugar de «Barrio / punto de recogida» | **Aceptada.** Colores por tipo del brief | — |
+| 11 | Columna «Estado» | Claude Code · diseño | «Origen» para el origen; ✓/✕ para el resto | **Aceptada** | — |
+| 12 | Arranque | Claude Code · diseño | Sin carga automática del ejemplo; origen y destino por defecto | **Aceptada.** La regla del destino se ajustó al escribir la especificación (ver D-11) | Orden de `datos/red_ejemplo.json` |
+| 13 | Trayectos en COP | Claude Code · contraste con el contrato | Mostrar solo minutos por trayecto | **Aceptada.** La API solo da pesos para una ruta calculada | `cheapest_route` en `backend/network.py` |
+| 14 | Código sin uso | Claude Code · implementación | Reutilizar servicios, hooks y contextos; borrar vistas sin uso | **Aceptada** | Pendiente (T11) |
+| 15 | Fuentes | Claude Code · diseño | Agregar Manrope 800 | **Aceptada** | `frontend/index.html` |
+| 16 | Pruebas del frontend | Claude Code · validación | No agregar Vitest; validar con build, lint, aceptación Python y capturas | **Aceptada.** Sería una dependencia nueva | — |
