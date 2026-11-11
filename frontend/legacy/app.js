@@ -186,6 +186,10 @@ let rutaActiva = null; // { origen, destino } mientras se muestra una ruta
 
 const minutos = (valor) => (valor === null || valor === undefined ? "∞" : `${valor} min`);
 
+// Pesos colombianos sin decimales, p. ej. "$ 3.600" (el valor ya viene redondeado del backend).
+const formatoCop = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+const pesos = (valor) => formatoCop.format(valor);
+
 function pintarTramos(tramos) {
   const filas = tramos.map((t) => `
     <tr>
@@ -194,9 +198,11 @@ function pintarTramos(tramos) {
       <td class="codigo">${escapar(t.destino)}</td>
       <td class="numero">${escapar(t.costo)}</td>
       <td class="numero">${escapar(t.acumulado)}</td>
+      <td class="numero">${escapar(pesos(t.costo_cop))}</td>
+      <td class="numero">${escapar(pesos(t.acumulado_cop))}</td>
     </tr>`);
   return `<div class="tabla-desplazable"><table>
-    <thead><tr><th>Desde</th><th></th><th>Hasta</th><th class="numero">Costo (min)</th><th class="numero">Acumulado</th></tr></thead>
+    <thead><tr><th>Desde</th><th></th><th>Hasta</th><th class="numero">Costo (min)</th><th class="numero">Acumulado</th><th class="numero">COP</th><th class="numero">Acumulado COP</th></tr></thead>
     <tbody>${filas.join("")}</tbody></table></div>`;
 }
 
@@ -205,8 +211,8 @@ function pintarComparacion(comparacion) {
   return `<div class="cobertura-bloque comparacion ${ahorro ? "ahorro" : ""}">
       <h3>Comparación con el camino de menos trayectos</h3>
       ${pintarCamino(comparacion.camino)}
-      <p class="nota">${escapar(comparacion.saltos)} trayecto(s) · ${escapar(comparacion.costo)} min
-        ${ahorro ? `· <strong>${escapar(comparacion.diferencia)} min más caro</strong>` : ""}</p>
+      <p class="nota">${escapar(comparacion.saltos)} trayecto(s) · ${escapar(comparacion.costo)} min · ${escapar(pesos(comparacion.costo_cop))}
+        ${ahorro ? `· <strong>${escapar(comparacion.diferencia)} min · ${escapar(pesos(comparacion.diferencia_cop))} más caro</strong>` : ""}</p>
       <p>${escapar(comparacion.mensaje)}</p>
     </div>`;
 }
@@ -236,8 +242,9 @@ function pintarTrazaDijkstra(traza) {
 
 function pintarRuta(datos) {
   const detalle = datos.existe_ruta
-    ? `<div class="cobertura-bloque"><h3>Ruta elegida · ${escapar(datos.costo_total)} min en ${escapar(datos.saltos)} trayecto(s)</h3>
-        ${pintarCamino(datos.camino)}</div>
+    ? `<div class="cobertura-bloque"><h3>Ruta elegida · ${escapar(datos.costo_total)} min · ${escapar(pesos(datos.costo_monetario.total))} en ${escapar(datos.saltos)} trayecto(s)</h3>
+        ${pintarCamino(datos.camino)}
+        <p class="nota">Tarifa: ${escapar(pesos(datos.costo_monetario.tarifa_por_minuto))} por minuto</p></div>
        ${datos.tramos.length ? `<div class="cobertura-bloque"><h3>Tramos</h3>${pintarTramos(datos.tramos)}</div>` : ""}
        ${datos.saltos > 0 ? pintarComparacion(datos.comparacion_menos_saltos) : ""}`
     : `<div class="cobertura-bloque"><h3>¿Por qué no?</h3><p>${escapar(datos.explicacion)}</p></div>`;
