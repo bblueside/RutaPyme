@@ -46,7 +46,7 @@ function NetworkPage() {
   return (
     <div className={styles.page}>
       <PageIntro onAddPoint={() => setDialog({ kind: 'point' })} />
-      <StatCards network={network} coverage={coverageResource.data ?? coverageResource.latest} origin={origin} />
+      <StatCards network={network} coverage={origin ? (coverageResource.data ?? coverageResource.latest) : null} origin={origin} />
 
       <div className={styles.layout}>
         <div className={styles.main}>

@@ -49,6 +49,10 @@
 .badgeText { font: 700 11px var(--panel-font-title); fill: var(--panel-accent); }
 .crossBadge { fill: var(--panel-error); }
 
+@media (max-width: 639px) {
+  .scroller { height: 480px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .node { transition: none; }
 }

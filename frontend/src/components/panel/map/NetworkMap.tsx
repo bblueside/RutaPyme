@@ -57,7 +57,8 @@ function NetworkMap({ points, network, coverage, mode, destination, primaryPath,
   const secondaryEdges = pathEdges(secondaryPath)
   const primaryNodes = new Set(primaryPath)
   const secondaryNodes = new Set(secondaryPath)
-  const emphasis = primaryPath.length > 0
+  // Solo la ruta atenúa el resto; en Cobertura se resaltan los alcanzables y se atenúan los que no lo son.
+  const emphasis = mode === 'route' && primaryPath.length > 0
 
   // Tras cambiar el zoom, conserva el punto que estaba en el centro del contenedor.
   useLayoutEffect(() => {

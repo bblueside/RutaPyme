@@ -9,7 +9,8 @@
 
 /* Móvil: una columna con el orden de la especificación (planificador, mapa, cobertura, nota, tablas). */
 @media (max-width: 959px) {
-  .layout { display: flex; flex-direction: column; gap: var(--panel-gap); }
+  .layout { display: flex; flex-direction: column; align-items: stretch; gap: var(--panel-gap); }
+  .planner, .map, .coverage, .note, .tables { min-width: 0; }
   .main, .side { display: contents; }
   .planner { order: 1; }
   .map { order: 2; }
