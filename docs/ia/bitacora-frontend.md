@@ -62,3 +62,14 @@ página fiel a las capturas del diseño actual, a `Guias.md` y al brief de ident
 | 14 | Código sin uso | Claude Code · implementación | Reutilizar servicios, hooks y contextos; borrar vistas sin uso | **Aceptada** | Pendiente (T11) |
 | 15 | Fuentes | Claude Code · diseño | Agregar Manrope 800 | **Aceptada** | `frontend/index.html` |
 | 16 | Pruebas del frontend | Claude Code · validación | No agregar Vitest; validar con build, lint, aceptación Python y capturas | **Aceptada.** Sería una dependencia nueva | — |
+
+### Implementación de «Mi red de entregas» (2026-11-11)
+
+| # | Decisión o pieza | Herramienta / objetivo de IA | Propuesta recibida | Acepté o rechacé y por qué | Cómo la verifiqué |
+|---|------------------|------------------------------|--------------------|----------------------------|-------------------|
+| 17 | Contador de cobertura | Claude Code · contraste con el contrato | Mostrar `total_alcanzables` de la API («5 de 6») en lugar de contar al origen («6 de 7») | **Aceptada.** El backend no cuenta al origen; se corrigió la especificación (§7.3, CA-M02) | `GET /api/cobertura/BOD-CENTRO` |
+| 18 | Zoom del mapa | Claude Code · implementación | Zoom por ancho del SVG dentro de un contenedor con scroll, en lugar de `transform` | **Aceptada.** En móvil el desplazamiento es nativo y no hay que simular gestos | Prueba en el navegador: 744 → 1042 → 446 → 744 px |
+| 19 | Trayectos entre lugares de la misma columna | Claude Code · revisión visual | Curvarlos para que no pisen el nombre del lugar | **Aceptada** tras ver la etiqueta «10 min» sobre «Barrio» | Captura a 1440 px |
+| 20 | API propia para probar | Claude Code · validación | Puerto 8101 y Vite con `API_TARGET`, porque ya había una API en 8000 | **Aceptada.** Evita vaciar la red de quien tenga la API abierta | `vite.config.ts`, `.claude/launch.json` |
+| 21 | Orden del DOM en móvil | Claude Code · revisión | Usar CSS `order` para que el planificador salga antes que el mapa | **Aceptada con reserva:** el orden del foco sigue siendo mapa → planificador | `pruebas/prueba_manual_mi_red.md` (pendientes) |
+| 22 | Fallo de lint | Claude Code · implementación | Reemplazar una expresión regular con espacio irregular por `replaceAll('\u00a0', ' ')` | **Aceptada.** Un `sed` borró la barra invertida; se corrigió a mano y se revisó | `npm run lint` y el formato `$ 3.600` en pantalla |
