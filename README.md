@@ -105,9 +105,11 @@ Los scripts usan solo `urllib`, vacían la red al empezar (se pueden repetir) y 
   inválidos, errores de la API, imagen y datos de ejemplo). Última salida:
   [`pruebas/salidas/aceptacion_feature1.txt`](pruebas/salidas/aceptacion_feature1.txt) → **33/33 aprobados**.
 - **Feature 2:** cobertura desde una bodega, verificación origen → destino, puntos aislados, ciclos y errores.
-- **Feature 3:** 32 escenarios: ruta de menor costo, comparación con la de menos saltos, ruta inexistente,
-  nodo inexistente, costos inválidos, ciclos e imagen. Última salida:
-  [`pruebas/salidas/aceptacion_feature3.txt`](pruebas/salidas/aceptacion_feature3.txt) → **32/32 aprobados**.
+- **Feature 3:** 39 escenarios: ruta de menor costo, comparación con la de menos saltos, ruta inexistente,
+  nodo inexistente, costos inválidos, ciclos, costo monetario en COP e imagen. Última salida:
+  [`pruebas/salidas/aceptacion_feature3.txt`](pruebas/salidas/aceptacion_feature3.txt) → **39/39 aprobados**.
+  La tarifa inválida (CA-53) no se puede provocar por HTTP; se comprueba en consola:
+  `python -c "from backend.network import validate_cost_per_minute; validate_cost_per_minute(0)"`.
 - **Panel web:** checklist manual en [`pruebas/prueba_manual_panel.md`](pruebas/prueba_manual_panel.md).
 
 ## 4. Endpoints de la API REST
@@ -126,7 +128,7 @@ Los scripts usan solo `urllib`, vacían la red al empezar (se pueden repetir) y 
 | GET | `/api/red/imagen/cobertura/{origen}` | — | 200 PNG con la cobertura de `origen` resaltada · 404 |
 | GET | `/api/cobertura/{origen}` | — | 200 puntos alcanzables y no alcanzables, saltos y recorrido · 400 · 404 |
 | GET | `/api/cobertura/{origen}/{destino}` | — | 200 `alcanzable` (sí/no), camino y explicación · 404 |
-| GET | `/api/ruta/{origen}/{destino}` | — | 200 ruta de menor costo: `camino`, `costo_total`, `tramos`, comparación con la de menos saltos y traza; `existe_ruta: false` con explicación si no hay ruta · 400 · 404 |
+| GET | `/api/ruta/{origen}/{destino}` | — | 200 ruta de menor costo: `camino`, `costo_total`, `costo_monetario` (COP), `tramos`, comparación con la de menos saltos y traza; `existe_ruta: false` con explicación si no hay ruta · 400 · 404 |
 | GET | `/api/red/imagen/ruta/{origen}/{destino}` | — | 200 PNG con la ruta de menor costo resaltada · 404 |
 | POST | `/api/red/ejemplo` | — | 201 carga la red sintética |
 | DELETE | `/api/red` | — | 200 vacía la red |
@@ -173,6 +175,12 @@ Detalle completo en [`docs/feature-1/modelado.md`](docs/feature-1/modelado.md).
   calcular). Para reconstruir la ruta se conserva el **predecesor** de cada punto. La respuesta compara la
   ruta con la de menos saltos: `BOD-CENTRO → PR-ESTACION` directo tiene 1 salto pero cuesta 30 min, y por
   `BAR-SUR` tiene 2 saltos y cuesta 18. Detalle en [`docs/feature-3/modelado.md`](docs/feature-3/modelado.md).
+- **Costo monetario (Feature 3):** una sola constante, `COST_PER_MINUTE_COP = 200` en `backend/network.py`
+  (pesos colombianos por minuto). El costo en pesos es `minutos × tarifa`, redondeado al peso con `Decimal`
+  (0,5 hacia arriba). Dijkstra sigue minimizando minutos, así que la ruta elegida no cambia. Si la tarifa no
+  es un entero mayor que 0, el servidor no arranca. La respuesta agrega `costo_monetario`, `costo_cop` y
+  `acumulado_cop` por tramo, y `costo_cop` y `diferencia_cop` en la comparación; los campos en minutos
+  no cambian.
 - **Sin frameworks en el backend:** API con `http.server` de la biblioteca estándar. El frontend (React +
   TypeScript con Vite) es un acuerdo del equipo y consume la API real.
 
