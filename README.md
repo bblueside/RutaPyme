@@ -12,7 +12,7 @@ veces envía pedidos por conexiones cerradas. Esta herramienta modela su red com
 |---------|--------|-------------|
 | 1 · Red operativa inicial | ✅ Completa | Registrar y consultar puntos y trayectos |
 | 2 · Cobertura de entregas | ✅ Completa | ¿Qué destinos alcanzo desde una bodega? Backend, API e interfaz listos |
-| 3 · Ruta de menor costo | 🟡 Backend completo | Ruta más barata entre dos puntos (Dijkstra). API y pruebas listas; interfaz pendiente |
+| 3 · Ruta de menor costo | ✅ Completa | Ruta más barata entre dos puntos (Dijkstra). API, interfaz y pruebas listas |
 | 4 · Operación demostrable | ⏳ Pendiente | Integración, cambio de requisito y demo |
 
 ---
