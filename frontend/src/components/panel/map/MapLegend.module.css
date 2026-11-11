@@ -1,0 +1,9 @@
+.legend { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--panel-space-2) var(--panel-space-4); margin-top: var(--panel-space-3); font-size: .78rem; color: var(--panel-ink-soft); }
+.list { display: flex; flex-wrap: wrap; gap: var(--panel-space-2) var(--panel-space-4); margin: 0; padding: 0; list-style: none; }
+.item { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; }
+.dashedDot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px dashed var(--panel-error); box-sizing: border-box; }
+.layer { display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--panel-accent); color: var(--panel-accent); font: 700 .62rem var(--panel-font-title); }
+.lineSolid { width: 22px; height: 0; border-top: 3px solid var(--panel-accent); }
+.lineDashed { width: 22px; height: 0; border-top: 2.5px dashed var(--panel-ink-soft); }
+.direction { display: inline-flex; align-items: center; gap: 8px; }

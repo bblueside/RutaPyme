@@ -7,12 +7,10 @@ import InfoSections, { INFO_NAV_SECTIONS } from './components/landing/InfoSectio
 import LandingClosing from './components/landing/LandingClosing'
 import { HOME_HREF, WORLD_CONFIG } from './components/landing/scrollWorldConfig'
 import type { ScrollWorldInstance } from './lib/scrub-engine.js'
-import { INTERFACE_ROUTE, PANEL_ROUTES, TOP_ANCHOR } from './routes'
+import { INTERFACE_ROUTE, TOP_ANCHOR } from './routes'
 import { useZonaLanding } from './hooks/useZonaLanding'
 import PanelLayout from './components/panel/layout/PanelLayout'
-import OverviewView from './components/panel/overview/OverviewView'
-import PointsView from './components/panel/points/PointsView'
-import CoverageView from './components/panel/coverage/CoverageView'
+import NetworkPage from './components/panel/page/NetworkPage'
 
 const SECTIONS = [...WORLD_CONFIG.sections, ...INFO_NAV_SECTIONS]
 const WORLD_SECTION_COUNT = WORLD_CONFIG.sections.length
@@ -69,10 +67,8 @@ function App() {
     <Routes>
       <Route path="/" element={<Landing />} />
       <Route path={INTERFACE_ROUTE} element={<PanelLayout />}>
-        <Route index element={<OverviewView />} />
-        <Route path={PANEL_ROUTES.points} element={<PointsView />} />
-        <Route path={PANEL_ROUTES.connections} element={<Navigate to={PANEL_ROUTES.points} replace />} />
-        <Route path={PANEL_ROUTES.coverage} element={<CoverageView />} />
+        <Route index element={<NetworkPage />} />
+        <Route path="*" element={<Navigate to={INTERFACE_ROUTE} replace />} />
       </Route>
     </Routes>
   )

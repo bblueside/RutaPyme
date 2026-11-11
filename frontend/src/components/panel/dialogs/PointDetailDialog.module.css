@@ -1,0 +1,6 @@
+.summary { display: flex; align-items: center; gap: var(--panel-space-3); }
+.heading { margin: 0; font: 600 .9rem var(--panel-font-title); }
+.exits { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; border: 1px solid var(--panel-border); border-radius: var(--panel-radius-sm); }
+.exits li { display: flex; justify-content: space-between; gap: var(--panel-space-3); padding: 10px var(--panel-space-3); font-size: .88rem; }
+.exits li + li { border-top: 1px solid var(--panel-border); }
+.minutes { font: 600 .82rem var(--panel-font-code); font-variant-numeric: tabular-nums; color: var(--panel-ink-soft); }

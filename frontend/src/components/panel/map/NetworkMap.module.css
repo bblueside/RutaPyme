@@ -1,0 +1,54 @@
+.frame { position: relative; min-width: 0; }
+.scroller {
+  display: flex;
+  height: clamp(380px, 52vw, 520px);
+  overflow: auto;
+  border-radius: 12px;
+  cursor: grab;
+  background-color: #FBFBFF;
+  background-image: radial-gradient(#D5DAF0 1px, transparent 1px);
+  background-size: 18px 18px;
+  border: 1px solid var(--panel-border);
+  scrollbar-width: thin;
+}
+.dragging { cursor: grabbing; user-select: none; }
+.svg { display: block; flex: none; margin: auto; touch-action: pan-x pan-y; }
+
+/* ---------- Trayectos ---------- */
+.edge path { stroke: #AAB3D6; stroke-width: 1.6; fill: none; }
+.edgeLabel {
+  font: 600 12px var(--panel-font-code);
+  fill: #4A5070;
+  paint-order: stroke;
+  stroke: #FBFBFF;
+  stroke-width: 6px;
+  stroke-linejoin: round;
+}
+.arrowBase { fill: none; stroke: #AAB3D6; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.arrowPrimary { fill: none; stroke: var(--panel-accent); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.arrowSecondary { fill: none; stroke: var(--panel-ink-soft); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.primary path { stroke: var(--panel-accent); stroke-width: 3.2; }
+.primary .edgeLabel { fill: var(--panel-accent); font-weight: 700; }
+.secondary path { stroke: var(--panel-ink-soft); stroke-width: 2.2; stroke-dasharray: 7 6; }
+.secondary .edgeLabel { fill: var(--panel-ink-soft); }
+.dimmed { opacity: .32; }
+
+/* ---------- Lugares ---------- */
+.node { transition: opacity .2s; }
+.disc { fill: #fff; stroke: var(--type-color); stroke-width: 2; }
+.icon { color: var(--type-color); }
+.halo { fill: var(--type-color); opacity: .14; }
+.origin .disc { fill: var(--type-color); }
+.origin .icon { color: #fff; }
+.unreachable .disc { stroke-dasharray: 5 4; }
+.unreachable:not(.dimmed) { opacity: .78; }
+.destination .disc { stroke-width: 4; }
+.name { font: 800 15px var(--panel-font-text); fill: var(--panel-ink); paint-order: stroke; stroke: #FBFBFF; stroke-width: 5px; stroke-linejoin: round; }
+.role { font: 500 12.5px var(--panel-font-text); fill: var(--panel-ink-soft); paint-order: stroke; stroke: #FBFBFF; stroke-width: 5px; stroke-linejoin: round; }
+.badge { fill: #fff; stroke: var(--panel-accent); stroke-width: 1.5; }
+.badgeText { font: 700 11px var(--panel-font-title); fill: var(--panel-accent); }
+.crossBadge { fill: var(--panel-error); }
+
+@media (prefers-reduced-motion: reduce) {
+  .node { transition: none; }
+}

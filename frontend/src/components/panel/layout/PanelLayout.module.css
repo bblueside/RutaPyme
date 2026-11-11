@@ -6,12 +6,9 @@
   line-height: 1.55;
 }
 .content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--panel-space-5);
   box-sizing: border-box;
   width: min(100% - 32px, var(--panel-content-width));
   margin: 0 auto;
-  padding: calc(var(--panel-header-height) + var(--panel-space-5)) 0 var(--panel-space-6);
+  padding: var(--panel-space-5) 0 var(--panel-space-5);
 }
 .page :focus-visible { outline: 2px solid var(--panel-accent); outline-offset: 3px; }

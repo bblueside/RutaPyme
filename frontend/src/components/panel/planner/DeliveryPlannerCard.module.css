@@ -1,0 +1,29 @@
+.card { padding: var(--panel-space-5); }
+.head { display: flex; align-items: center; gap: var(--panel-space-3); margin-bottom: var(--panel-space-4); }
+.headIcon { display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 12px; background: var(--panel-accent-soft); color: var(--panel-accent); }
+.title { margin: 0; font: 700 1.02rem var(--panel-font-title); }
+.sub { margin: 0; font-size: .78rem; color: var(--panel-ink-soft); }
+
+.form { position: relative; display: flex; flex-direction: column; gap: var(--panel-space-3); }
+.label { align-items: center; gap: 6px; font-weight: 500; font-size: .78rem; color: var(--panel-ink-soft); }
+.originMark { width: 9px; height: 9px; border: 2px solid var(--panel-accent); border-radius: 50%; box-sizing: border-box; }
+.swap {
+  position: absolute; right: 4px; top: calc(50% - 38px); z-index: 1; display: grid; place-items: center; width: 34px; height: 34px;
+  border: 1px solid var(--panel-input); border-radius: var(--panel-radius-sm); background: var(--panel-surface);
+  color: var(--panel-accent); cursor: pointer; box-shadow: var(--panel-shadow);
+}
+.swap:hover:not(:disabled) { background: var(--panel-accent-soft); }
+.swap:disabled { opacity: .5; cursor: not-allowed; }
+.submit { justify-content: flex-start; width: 100%; margin-top: var(--panel-space-1); }
+.arrow { margin-left: auto; }
+
+.intro { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: var(--panel-space-5); padding-top: var(--panel-space-5); border-top: 1px dashed var(--panel-border); text-align: center; }
+.illustration { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--panel-accent-soft); color: var(--panel-accent); }
+.introTitle { margin: var(--panel-space-2) 0 0; font: 700 1.05rem var(--panel-font-title); }
+.introText { margin: 0; max-width: 28ch; font-size: .8rem; color: var(--panel-ink-soft); }
+.checks { display: flex; gap: var(--panel-space-4); margin: var(--panel-space-2) 0 0; padding: 0; list-style: none; font-size: .74rem; color: var(--panel-success); }
+.checks li { display: inline-flex; align-items: center; gap: 5px; }
+
+@media (max-width: 639px) {
+  .card { padding: var(--panel-space-4); }
+}
