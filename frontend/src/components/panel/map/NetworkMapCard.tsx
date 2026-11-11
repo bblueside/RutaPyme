@@ -64,9 +64,14 @@ function NetworkMapCard(props: NetworkMapCardProps) {
           </h2>
           <p className={styles.sub}>Cada conexión es una posibilidad de entrega.</p>
         </div>
-        <button type="button" className="pn-btn pn-btn--secondary" disabled={status !== 'online' || points.length < 2} onClick={props.onAddConnection}>
-          <PlusIcon /> Agregar trayecto
-        </button>
+        <div className={styles.actions}>
+          <button type="button" className="pn-btn pn-btn--secondary" disabled={status !== 'online'} onClick={props.onAddPoint}>
+            <PlusIcon /> Agregar lugar
+          </button>
+          <button type="button" className="pn-btn pn-btn--secondary" disabled={status !== 'online' || points.length < 2} onClick={props.onAddConnection}>
+            <PlusIcon /> Agregar trayecto
+          </button>
+        </div>
       </div>
 
       <div className={styles.modes} role="group" aria-label="Ver en la red">

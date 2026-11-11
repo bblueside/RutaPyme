@@ -1,8 +1,9 @@
 .card { padding: var(--panel-space-5); }
-.head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--panel-space-3); margin-bottom: var(--panel-space-4); }
+.head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--panel-space-3); margin-bottom: var(--panel-space-4); }
 .title { display: flex; align-items: center; gap: 8px; margin: 0; font: 700 1.1rem var(--panel-font-title); }
 .live { width: 7px; height: 7px; border-radius: 50%; background: var(--panel-success); }
 .liveOff { background: var(--panel-error) !important; }
+.actions { display: flex; flex: none; flex-wrap: nowrap; justify-content: flex-end; gap: var(--panel-space-2); }
 .sub { margin: 2px 0 0; font-size: .82rem; color: var(--panel-ink-soft); }
 
 .modes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--panel-space-2); margin-bottom: var(--panel-space-3); }
@@ -44,6 +45,8 @@
 @media (max-width: 639px) {
   .card { padding: var(--panel-space-4); }
   .head { flex-wrap: wrap; }
+  .actions { width: 100%; justify-content: stretch; }
+  .actions > button { flex: 1 1 0; padding: 0 8px; }
   .modesLabel { flex: 1 0 100%; }
   .mode { flex: 1 1 0; justify-content: center; gap: 0; padding: 0 4px; min-height: 40px; font-size: .78rem; white-space: nowrap; }
   .mode svg { display: none; }
