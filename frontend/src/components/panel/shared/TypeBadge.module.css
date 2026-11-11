@@ -1,12 +1,12 @@
+/* Fondo claro del color del tipo y texto oscuro mezclado con él: contraste AA en los tres tipos. */
 .badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: var(--panel-radius-xs);
-  background: var(--type-color);
-  color: #fff;
-  font: 600 .72rem var(--panel-font-text);
+  background: color-mix(in srgb, var(--type-color) 14%, white);
+  color: color-mix(in srgb, var(--type-color) 45%, #0B1640);
+  font: 600 .75rem var(--panel-font-text);
   white-space: nowrap;
 }
-.dark { color: var(--panel-ink); }
 .dotWrap { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--type-color); flex: none; }

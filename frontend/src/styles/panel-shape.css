@@ -15,11 +15,10 @@
   --panel-border: #E2E5F0;
   --panel-input: #D9DDEB;
   --panel-muted: #F3F4FA;
-  --panel-shadow: 0 1px 2px rgb(11 22 64 / .05);
+  --panel-shadow: 0 1px 2px rgb(1 70 193 / .05), 0 10px 24px -18px rgb(1 70 193 / .22);
   --panel-shadow-raised: 0 12px 32px rgb(11 22 64 / .18), 0 2px 6px rgb(11 22 64 / .08);
 
   --panel-content-width: 1200px;
-  --panel-header-height: 66px;
 }
 
 @media (max-width: 1199px) {
@@ -27,10 +26,6 @@
 }
 @media (min-width: 1200px) {
   :root { --panel-gap: var(--panel-space-4); }
-}
-@media (max-width: 859px) {
-  /* La barra de navegación secundaria suma una fila al encabezado. */
-  :root { --panel-header-height: 110px; }
 }
 @media (max-width: 639px) {
   :root { --panel-control-height: 40px; }
