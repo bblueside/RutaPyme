@@ -86,7 +86,11 @@ function pintarAdyacencia(lineas) {
     : "<li>La red está vacía.</li>";
 }
 
+// La imagen resalta una sola consulta a la vez: la ruta (Feature 3) o la cobertura (Feature 2).
 function rutaImagen() {
+  if (rutaActiva) {
+    return `/api/red/imagen/ruta/${encodeURIComponent(rutaActiva.origen)}/${encodeURIComponent(rutaActiva.destino)}`;
+  }
   return coberturaActiva
     ? `/api/red/imagen/cobertura/${encodeURIComponent(coberturaActiva.origen)}`
     : "/api/red/imagen";
@@ -95,9 +99,10 @@ function rutaImagen() {
 function refrescarImagen() {
   const imagen = $("#imagen-red");
   imagen.src = `${rutaImagen()}?v=${Date.now()}`; // evita que el navegador use una imagen vieja
-  $("#etiqueta-imagen").textContent = coberturaActiva
-    ? `Cobertura desde ${coberturaActiva.origen} · dibujado con NetworkX`
-    : "Dibujado con NetworkX";
+  let etiqueta = "Dibujado con NetworkX";
+  if (rutaActiva) etiqueta = `Ruta ${rutaActiva.origen} → ${rutaActiva.destino} · dibujado con NetworkX`;
+  else if (coberturaActiva) etiqueta = `Cobertura desde ${coberturaActiva.origen} · dibujado con NetworkX`;
+  $("#etiqueta-imagen").textContent = etiqueta;
 }
 
 // --- Cobertura de entregas (Feature 2) -------------------------------------
@@ -175,6 +180,107 @@ async function consultarCobertura(consulta) {
   }
 }
 
+// --- Ruta de menor costo (Feature 3) ---------------------------------------
+
+let rutaActiva = null; // { origen, destino } mientras se muestra una ruta
+
+const minutos = (valor) => (valor === null || valor === undefined ? "∞" : `${valor} min`);
+
+// Pesos colombianos sin decimales, p. ej. "$ 3.600" (el valor ya viene redondeado del backend).
+const formatoCop = new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 });
+const pesos = (valor) => formatoCop.format(valor);
+
+function pintarTramos(tramos) {
+  const filas = tramos.map((t) => `
+    <tr>
+      <td class="codigo">${escapar(t.origen)}</td>
+      <td aria-hidden="true">→</td>
+      <td class="codigo">${escapar(t.destino)}</td>
+      <td class="numero">${escapar(t.costo)}</td>
+      <td class="numero">${escapar(t.acumulado)}</td>
+      <td class="numero">${escapar(pesos(t.costo_cop))}</td>
+      <td class="numero">${escapar(pesos(t.acumulado_cop))}</td>
+    </tr>`);
+  return `<div class="tabla-desplazable"><table>
+    <thead><tr><th>Desde</th><th></th><th>Hasta</th><th class="numero">Costo (min)</th><th class="numero">Acumulado</th><th class="numero">COP</th><th class="numero">Acumulado COP</th></tr></thead>
+    <tbody>${filas.join("")}</tbody></table></div>`;
+}
+
+function pintarComparacion(comparacion) {
+  const ahorro = comparacion.diferencia > 0;
+  return `<div class="cobertura-bloque comparacion ${ahorro ? "ahorro" : ""}">
+      <h3>Comparación con el camino de menos trayectos</h3>
+      ${pintarCamino(comparacion.camino)}
+      <p class="nota">${escapar(comparacion.saltos)} trayecto(s) · ${escapar(comparacion.costo)} min · ${escapar(pesos(comparacion.costo_cop))}
+        ${ahorro ? `· <strong>${escapar(comparacion.diferencia)} min · ${escapar(pesos(comparacion.diferencia_cop))} más caro</strong>` : ""}</p>
+      <p>${escapar(comparacion.mensaje)}</p>
+    </div>`;
+}
+
+function pintarCostosDefinitivos(orden, costos) {
+  const pasos = orden.map((id, indice) => `<li><span class="paso-numero">${indice + 1}</span>
+      <strong class="codigo">${escapar(id)}</strong> <small>· ${escapar(minutos(costos[id]))}</small></li>`);
+  return `<div class="cobertura-bloque"><h3>Orden en que los puntos quedaron definitivos</h3>
+    <ul class="cobertura-lista definitivos">${pasos.join("")}</ul></div>`;
+}
+
+function pintarTrazaDijkstra(traza) {
+  const pasos = traza.map((p) => {
+    const mejoras = p.mejora.length
+      ? `<br><small>Mejora: ${p.mejora.map((m) => `${escapar(m.punto)} (${escapar(minutos(m.antes))} → ${escapar(minutos(m.ahora))})`).join(", ")}</small>`
+      : "";
+    const descartes = p.descarta.length
+      ? `<br><small>Descarta: ${p.descarta.map((d) => `${escapar(d.punto)} (${escapar(d.motivo)})`).join(", ")}</small>`
+      : "";
+    const pendientes = p.pendientes.length
+      ? `<br><small>Pendientes: ${p.pendientes.map((q) => `${escapar(q.punto)} ${escapar(minutos(q.costo))}`).join(", ")}</small>`
+      : "";
+    return `<li><strong>${escapar(p.definitivo)}</strong> (${escapar(minutos(p.costo))}): ${escapar(p.decision)}${mejoras}${descartes}${pendientes}</li>`;
+  });
+  return `<details class="traza"><summary>Traza de Dijkstra (${traza.length} pasos)</summary><ol>${pasos.join("")}</ol></details>`;
+}
+
+function pintarRuta(datos) {
+  const detalle = datos.existe_ruta
+    ? `<div class="cobertura-bloque"><h3>Ruta elegida · ${escapar(datos.costo_total)} min · ${escapar(pesos(datos.costo_monetario.total))} en ${escapar(datos.saltos)} trayecto(s)</h3>
+        ${pintarCamino(datos.camino)}
+        <p class="nota">Tarifa: ${escapar(pesos(datos.costo_monetario.tarifa_por_minuto))} por minuto</p></div>
+       ${datos.tramos.length ? `<div class="cobertura-bloque"><h3>Tramos</h3>${pintarTramos(datos.tramos)}</div>` : ""}
+       ${datos.saltos > 0 ? pintarComparacion(datos.comparacion_menos_saltos) : ""}`
+    : `<div class="cobertura-bloque"><h3>¿Por qué no?</h3><p>${escapar(datos.explicacion)}</p></div>`;
+  return `
+    <p class="veredicto ${datos.existe_ruta ? "si" : "no"}">${escapar(datos.mensaje)}</p>
+    ${detalle}
+    ${pintarCostosDefinitivos(datos.orden_definitivos, datos.costos_definitivos)}
+    ${pintarTrazaDijkstra(datos.traza)}`;
+}
+
+function mostrarResultadoRuta(contenido, esError = false) {
+  const contenedor = $("#resultado-ruta");
+  contenedor.classList.remove("oculto");
+  contenedor.innerHTML = esError ? `<p class="veredicto error">${escapar(contenido)}</p>` : contenido;
+}
+
+function limpiarRuta() {
+  rutaActiva = null;
+  $("#resultado-ruta").classList.add("oculto");
+  $("#resultado-ruta").innerHTML = "";
+}
+
+// Consulta la ruta y la pinta. Devuelve true si la API respondió bien.
+async function consultarRuta(consulta) {
+  const ruta = `/api/ruta/${encodeURIComponent(consulta.origen)}/${encodeURIComponent(consulta.destino)}`;
+  try {
+    const datos = await llamarApi("GET", ruta);
+    rutaActiva = { origen: datos.origen.id, destino: datos.destino.id };
+    mostrarResultadoRuta(pintarRuta(datos));
+    return true;
+  } catch (error) {
+    mostrarResultadoRuta(error.message, true);
+    return false;
+  }
+}
+
 async function refrescar() {
   const [puntos, conexiones, red] = await Promise.all([
     llamarApi("GET", "/api/puntos"),
@@ -187,6 +293,7 @@ async function refrescar() {
   pintarAdyacencia(red.texto);
   // Con una cobertura a la vista se recalcula con la red nueva; si el origen ya no existe, se limpia.
   if (coberturaActiva && !(await consultarCobertura(coberturaActiva))) limpiarCobertura();
+  if (rutaActiva && !(await consultarRuta(rutaActiva))) limpiarRuta();
   refrescarImagen();
 }
 
@@ -253,11 +360,32 @@ $("#form-cobertura").addEventListener("submit", async (evento) => {
   }
   const exito = await consultarCobertura({ origen, destino: formulario.destino.value.trim() });
   if (!exito) coberturaActiva = null; // un error de la API no deja una cobertura a medias en la imagen
+  else limpiarRuta(); // la imagen resalta una sola consulta a la vez
   refrescarImagen();
 });
 
 $("#boton-limpiar-cobertura").addEventListener("click", () => {
   limpiarCobertura();
+  refrescarImagen();
+});
+
+$("#form-ruta").addEventListener("submit", async (evento) => {
+  evento.preventDefault();
+  const formulario = evento.target;
+  const origen = formulario.origen.value.trim();
+  const destino = formulario.destino.value.trim();
+  if (!origen || !destino) {
+    mostrarResultadoRuta("Indique el punto de origen y el de destino.", true);
+    return;
+  }
+  const exito = await consultarRuta({ origen, destino });
+  if (!exito) rutaActiva = null; // un error de la API no deja una ruta a medias en la imagen
+  else limpiarCobertura(); // la imagen resalta una sola consulta a la vez
+  refrescarImagen();
+});
+
+$("#boton-limpiar-ruta").addEventListener("click", () => {
+  limpiarRuta();
   refrescarImagen();
 });
 

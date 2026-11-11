@@ -9,6 +9,8 @@ Delivery coverage (Feature 2) is our own breadth-first traversal (BFS), describe
 docs/feature-2/especificacion.md (rules R-09 to R-14).
 The cheapest route (Feature 3) is our own Dijkstra algorithm with a priority queue
 (heapq), described in docs/feature-3/especificacion.md (rules R-16 to R-23).
+The monetary cost of a route in Colombian pesos is its minutes times one fixed rate,
+COST_PER_MINUTE_COP (rules R-24 to R-27 of the same document).
 
 Identifiers and comments are in English; the API contract (JSON fields, error codes) and the
 messages shown to the user stay in Spanish because the frontend and the client depend on them.
@@ -18,9 +20,14 @@ import heapq
 import math
 import re
 from collections import deque
+from decimal import ROUND_HALF_UP, Decimal
 
 POINT_TYPES = ("bodega", "barrio", "punto_recogida")
 ID_PATTERN = re.compile(r"[A-Za-z0-9_-]{1,30}")
+
+# R-24: the single monetary variable of the backend. Colombian pesos (COP) charged per minute of route.
+COST_PER_MINUTE_COP = 200
+CURRENCY = "COP"
 
 
 # ---------------------------------------------------------------------------
@@ -98,6 +105,38 @@ def validate_cost(value):
     if not math.isfinite(value) or value <= 0:
         raise InvalidData(f"El costo debe ser un número mayor que 0 (minutos). Se recibió {value}.")
     return value
+
+
+def validate_cost_per_minute(value):
+    """R-26: the rate must be an integer greater than 0 (bool does not count).
+
+    It is a constant of the code, not user input, so a bad value is a configuration error:
+    it raises ValueError (not a NetworkError / HTTP 400) and the server does not start.
+    """
+    if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+        raise ValueError(
+            "COST_PER_MINUTE_COP debe ser un entero mayor que 0 (pesos colombianos por minuto). "
+            f"Se encontró {value!r}."
+        )
+    return value
+
+
+validate_cost_per_minute(COST_PER_MINUTE_COP)  # R-26: checked when the module is imported
+
+
+def minutes_to_cop(minutes):
+    """R-24 and R-25: whole pesos for `minutes`, rounded half up. O(1).
+
+    Decimal(str(minutes)) keeps the decimal value the user wrote; Decimal(float) would copy the
+    binary error (2.0025 is stored as 2.00249999...) and round 400.5 pesos down to 400.
+    """
+    pesos = Decimal(str(minutes)) * COST_PER_MINUTE_COP
+    return int(pesos.quantize(Decimal(1), rounding=ROUND_HALF_UP))
+
+
+def format_cop(pesos):
+    """Pesos as shown in messages: thousands separated by a dot, e.g. 3600 -> '$3.600 COP'."""
+    return f"${pesos:,}".replace(",", ".") + f" {CURRENCY}"
 
 
 # ---------------------------------------------------------------------------
@@ -416,17 +455,21 @@ class OperationalNetwork:
             path = self._rebuild_path(search["came_from"], destination)
             total_cost = search["accumulated_cost"][destination]
             hops = len(path) - 1
+            total_pesos = minutes_to_cop(total_cost)
             if hops == 0:
-                message = f"{destination} es el mismo punto de origen: costo 0, sin hacer ningún trayecto."
+                message = (f"{destination} es el mismo punto de origen: costo 0 min ({format_cop(total_pesos)}), "
+                           "sin hacer ningún trayecto.")
             else:
                 message = (f"La ruta de menor costo de {origin} a {destination} cuesta {total_cost:g} min "
-                           f"en {hops} {'trayecto' if hops == 1 else 'trayectos'}.")
+                           f"({format_cop(total_pesos)}) en {hops} {'trayecto' if hops == 1 else 'trayectos'}.")
             response.update({
                 "existe_ruta": True,
                 "mensaje": message,
                 "camino": path,
                 "costo_total": total_cost,
                 "saltos": hops,
+                "costo_monetario": {"moneda": CURRENCY, "tarifa_por_minuto": COST_PER_MINUTE_COP,
+                                    "total": total_pesos},
                 "tramos": self._path_legs(path),
                 "comparacion_menos_saltos": self._compare_with_fewest_hops(origin, destination, path, total_cost),
             })
@@ -531,7 +574,8 @@ class OperationalNetwork:
         for origin, destination in zip(path, path[1:]):
             cost = self._adjacency[origin][destination]
             accumulated += cost
-            legs.append({"origen": origin, "destino": destination, "costo": cost, "acumulado": accumulated})
+            legs.append({"origen": origin, "destino": destination, "costo": cost, "acumulado": accumulated,
+                         "costo_cop": minutes_to_cop(cost), "acumulado_cop": minutes_to_cop(accumulated)})
         return legs
 
     def _compare_with_fewest_hops(self, origin, destination, path, total_cost):
@@ -541,18 +585,22 @@ class OperationalNetwork:
         bfs_cost = bfs_legs[-1]["acumulado"] if bfs_legs else 0
         bfs_hops = len(bfs_path) - 1
         difference = bfs_cost - total_cost
+        bfs_pesos = minutes_to_cop(bfs_cost)
+        difference_pesos = bfs_pesos - minutes_to_cop(total_cost)
 
         if bfs_path == path:
             message = "La ruta de menor costo también es la de menos trayectos."
         elif math.isclose(bfs_cost, total_cost):
-            message = (f"El camino con menos trayectos ({bfs_hops}) cuesta lo mismo ({bfs_cost:g} min): "
-                       "las dos opciones empatan en costo.")
+            message = (f"El camino con menos trayectos ({bfs_hops}) cuesta lo mismo "
+                       f"({bfs_cost:g} min, {format_cop(bfs_pesos)}): las dos opciones empatan en costo.")
         else:
-            message = (f"El camino con menos trayectos ({bfs_hops}) cuesta {bfs_cost:g} min: "
-                       f"{difference:g} min más que la ruta de menor costo ({len(path) - 1} trayectos). "
+            message = (f"El camino con menos trayectos ({bfs_hops}) cuesta {bfs_cost:g} min "
+                       f"({format_cop(bfs_pesos)}): {difference:g} min ({format_cop(difference_pesos)}) más "
+                       f"que la ruta de menor costo ({len(path) - 1} trayectos). "
                        "Menos saltos no significa menor costo.")
         return {"camino": bfs_path, "saltos": bfs_hops, "costo": bfs_cost,
-                "diferencia": difference, "mensaje": message}
+                "diferencia": difference, "costo_cop": bfs_pesos, "diferencia_cop": difference_pesos,
+                "mensaje": message}
 
     # --- Helpers ----------------------------------------------------------
 

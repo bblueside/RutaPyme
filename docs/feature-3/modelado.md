@@ -175,3 +175,72 @@ es el más barato: la lección no es que siempre cambie, sino que **no está gar
 | Registrar un costo ≤ 0 o no numérico | 400 `dato_invalido` (la ruta no cambia) |
 | Costo inválido ya presente en memoria | 400 `dato_invalido`: "Dijkstra solo funciona con costos mayores que 0" |
 | Empate de costo entre dos rutas | Se devuelve la que se descubre primero (orden de registro) |
+
+## 8. Adición: costo monetario en pesos colombianos (R-24 a R-27)
+
+### ¿Cambia el grafo o el algoritmo?
+
+**No.** El peso de cada arista sigue siendo **minutos**. El costo en pesos es una **conversión
+posterior** con una sola tarifa fija por minuto (`COST_PER_MINUTE_COP = 200` en `backend/network.py`):
+
+```
+pesos(camino) = minutos(camino) × 200
+```
+
+Multiplicar todos los pesos de las aristas por la misma constante positiva **no cambia el orden**
+de los caminos: si el camino A dura menos minutos que el B, también cuesta menos pesos. Por eso la
+ruta de menor costo en minutos **es** la de menor costo en pesos, y Dijkstra no se toca: la tarifa
+se aplica **después**, sobre la ruta ya calculada, y la traza sigue en minutos.
+
+| Alternativa considerada | Por qué se descartó |
+|-------------------------|---------------------|
+| Cargo fijo por ruta (despacho) | No depende del recorrido: no ayuda a comparar alternativas |
+| Cargo fijo por trayecto (tramo) | Pesos y minutos dejarían de ser proporcionales y habría que decidir qué se optimiza; eso es otra feature |
+| **Tarifa por minuto (elegida)** | Proporcional al tiempo, se explica con una multiplicación y no altera Dijkstra |
+
+### Ejemplo con la red de ejemplo (`BOD-CENTRO → PR-ESTACION`)
+
+| Camino | Saltos | Minutos | Pesos (× 200) |
+|--------|--------|---------|---------------|
+| `BOD-CENTRO → BAR-SUR → PR-ESTACION` (Dijkstra) | 2 | **18** | **$3.600** |
+| `BOD-CENTRO → PR-ESTACION` (menos saltos, BFS) | 1 | 30 | $6.000 |
+| **Diferencia** | | 12 | **$2.400** |
+
+Tramos de la ruta elegida:
+
+| Tramo | Minutos | Acumulado (min) | `costo_cop` | `acumulado_cop` |
+|-------|---------|-----------------|-------------|-----------------|
+| BOD-CENTRO → BAR-SUR | 8 | 8 | 1.600 | 1.600 |
+| BAR-SUR → PR-ESTACION | 10 | 18 | 2.000 | 3.600 |
+
+### Redondeo al peso (R-25)
+
+Los minutos pueden tener decimales (por ejemplo 2.5 o 7.5), así que el producto podría tener
+centavos. El peso colombiano se maneja sin centavos, así que se redondea al peso entero:
+
+1. Los minutos se convierten con `Decimal(str(minutos))`. `Decimal(2.0025)`, sin `str`, copia el
+   valor binario del `float` (`2.00249999999999994…`): por 200 da `400.4999…` y redondearía a **400**.
+   Con `Decimal("2.0025")` el producto es exactamente `400.5000`.
+2. Se redondea con `ROUND_HALF_UP` (0,5 sube): `400.5 → 401`. Se descarta `round()` de Python porque
+   redondea "al par": `round(2.0025 * 200)` da **400** (y `round(2.5) == 2`), y eso sorprende en dinero.
+3. `acumulado_cop` y `total` se calculan sobre los **minutos acumulados**, no sumando pesos ya
+   redondeados. Así el error de redondeo no se acumula tramo a tramo; `total` es el valor válido.
+
+Complejidad: O(1) para el total y O(longitud de la ruta) para los tramos, que ya se recorrían.
+
+### Validación de la tarifa (R-26)
+
+La tarifa es una constante del código y no la escribe el usuario, así que un valor inválido es un
+**error de configuración**, no un `400` del cliente. Se valida **al importar** el módulo: si no es un
+entero mayor que 0 (y no es `bool`), se lanza `ValueError` y el servidor no arranca. Es mejor no
+arrancar que cotizar despachos con un precio absurdo.
+
+### Casos borde de la adición
+
+| Caso | Respuesta |
+|------|-----------|
+| Hay ruta | `costo_monetario: {moneda: "COP", tarifa_por_minuto: 200, total}` y pesos en tramos y comparación |
+| No hay ruta | Sin `costo_monetario` (igual que sin `camino`) |
+| Origen = destino | `costo_monetario.total: 0` |
+| Minutos decimales con medio peso (2.0025 min) | `total: 401` (*half-up*) |
+| Tarifa inválida en el código | El servidor no arranca: `ValueError` con mensaje claro |

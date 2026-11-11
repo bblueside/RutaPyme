@@ -1,5 +1,5 @@
 Pruebas de aceptación · Feature 3 · RutaPyme
-API: http://127.0.0.1:8765
+API: http://127.0.0.1:8021
 
 === Red vacía ===
 [PASÓ] 01. Ruta con la red vacía
@@ -102,15 +102,38 @@ API: http://127.0.0.1:8765
         Esperado: 200, BOD-A → BAR-X → PR-Y, costo 5
         Obtenido: 200, BOD-A → BAR-X → PR-Y, costo 5.0
 
+=== Costo monetario en COP (200 COP por minuto) ===
+[PASÓ] 30. CA-47. Costo monetario total de la ruta de 18 min
+        Esperado: costo_monetario {moneda COP, tarifa_por_minuto 200, total 3600}
+        Obtenido: {'moneda': 'COP', 'tarifa_por_minuto': 200, 'total': 3600}
+[PASÓ] 31. CA-48. Cada tramo informa su costo y el acumulado en pesos
+        Esperado: costo_cop [1600, 2000], acumulado_cop [1600, 3600]
+        Obtenido: costo_cop [1600, 2000], acumulado_cop [1600, 3600]
+[PASÓ] 32. CA-49. La comparación con menos saltos también va en pesos
+        Esperado: costo_cop 6000, diferencia_cop 2400
+        Obtenido: costo_cop 6000, diferencia_cop 2400
+[PASÓ] 33. CA-50. Sin ruta no hay costo monetario
+        Esperado: 200, existe_ruta=False y sin costo_monetario
+        Obtenido: 200, existe_ruta=False, costo_monetario=None
+[PASÓ] 34. CA-51. Origen igual al destino cuesta 0 pesos
+        Esperado: 200, costo_monetario.total 0
+        Obtenido: 200, costo_monetario={'moneda': 'COP', 'tarifa_por_minuto': 200, 'total': 0}
+[PASÓ] 35. CA-52. Redondeo al peso con 0,5 hacia arriba: 2.0025 min × 200 = 400,5 → 401
+        Esperado: costo_total 2.0025 y costo_monetario.total 401
+        Obtenido: costo_total 2.0025 y total 401
+[PASÓ] 36. CA-54. Los campos en minutos y el camino no cambiaron
+        Esperado: BOD-CENTRO → BAR-SUR → PR-ESTACION, costo_total 18, tramos 8 y 10, comparación 30
+        Obtenido: BOD-CENTRO → BAR-SUR → PR-ESTACION, costo_total 18, tramos [8, 10], comparación 30
+
 === Visualización del resultado ===
-[PASÓ] 30. Imagen de la ruta dibujada con NetworkX a partir de nuestro Dijkstra
+[PASÓ] 37. Imagen de la ruta dibujada con NetworkX a partir de nuestro Dijkstra
         Esperado: 200 con firma PNG
         Obtenido: 200 con firma PNG=True
-[PASÓ] 31. Imagen cuando no existe ruta (solo marca origen y destino)
+[PASÓ] 38. Imagen cuando no existe ruta (solo marca origen y destino)
         Esperado: 200 con firma PNG
         Obtenido: 200 con firma PNG=True
-[PASÓ] 32. Imagen de ruta con destino inexistente
+[PASÓ] 39. Imagen de ruta con destino inexistente
         Esperado: 404 punto_inexistente
         Obtenido: 404 punto_inexistente — «El punto de destino 'NO-EXISTE' no existe. Regístrelo primero.»
 
-Resultado: 32/32 escenarios aprobados.
+Resultado: 39/39 escenarios aprobados.

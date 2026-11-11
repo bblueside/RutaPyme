@@ -220,6 +220,14 @@ th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; colo
 .traza summary { cursor: pointer; font-weight: 600; font-size: 0.88rem; }
 .traza ol { margin: 0.6rem 0 0; padding-left: 1.4rem; font-size: 0.84rem; display: grid; gap: 0.3rem; }
 
+/* --- Ruta de menor costo --- */
+.tarjeta .consulta-cobertura .boton.secundario { white-space: nowrap; }
+.comparacion { padding: 0.8rem 1rem; border-radius: 10px; background: var(--fondo); border-left: 5px solid var(--borde); }
+.comparacion.ahorro { border-left-color: #f59e0b; }
+.comparacion p { margin: 0.3rem 0 0; font-size: 0.86rem; }
+.definitivos { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+.paso-numero { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; margin-right: 0.3rem; border-radius: 999px; background: var(--primario); color: #fff; font-size: 0.72rem; font-weight: 700; }
+
 /* --- Aviso emergente --- */
 .aviso {
   position: fixed;

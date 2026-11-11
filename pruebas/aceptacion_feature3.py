@@ -239,6 +239,67 @@ def network_change_scenarios():
     call("POST", "/api/red/ejemplo")
 
 
+def monetary_cost_scenarios():
+    section("Costo monetario en COP (200 COP por minuto)")
+    call("POST", "/api/red/ejemplo")
+
+    status, body = call("GET", "/api/ruta/BOD-CENTRO/PR-ESTACION")
+    money = body.get("costo_monetario", {})
+    check("CA-47. Costo monetario total de la ruta de 18 min",
+          "costo_monetario {moneda COP, tarifa_por_minuto 200, total 3600}",
+          f"{money}",
+          status == 200 and money.get("moneda") == "COP" and money.get("tarifa_por_minuto") == 200
+          and money.get("total") == 3600)
+
+    legs = body.get("tramos", [])
+    leg_costs = [leg.get("costo_cop") for leg in legs]
+    leg_cumulative = [leg.get("acumulado_cop") for leg in legs]
+    check("CA-48. Cada tramo informa su costo y el acumulado en pesos",
+          "costo_cop [1600, 2000], acumulado_cop [1600, 3600]",
+          f"costo_cop {leg_costs}, acumulado_cop {leg_cumulative}",
+          leg_costs == [1600, 2000] and leg_cumulative == [1600, 3600])
+
+    comparison = body.get("comparacion_menos_saltos", {})
+    check("CA-49. La comparación con menos saltos también va en pesos",
+          "costo_cop 6000, diferencia_cop 2400",
+          f"costo_cop {comparison.get('costo_cop')}, diferencia_cop {comparison.get('diferencia_cop')}",
+          comparison.get("costo_cop") == 6000 and comparison.get("diferencia_cop") == 2400)
+
+    status, body = call("GET", "/api/ruta/BOD-CENTRO/PR-LAGUNA")
+    check("CA-50. Sin ruta no hay costo monetario",
+          "200, existe_ruta=False y sin costo_monetario",
+          f"{status}, existe_ruta={body.get('existe_ruta')}, costo_monetario={body.get('costo_monetario')}",
+          status == 200 and body.get("existe_ruta") is False and "costo_monetario" not in body)
+
+    status, body = call("GET", "/api/ruta/BAR-SUR/BAR-SUR")
+    check("CA-51. Origen igual al destino cuesta 0 pesos",
+          "200, costo_monetario.total 0",
+          f"{status}, costo_monetario={body.get('costo_monetario')}",
+          status == 200 and body.get("costo_monetario", {}).get("total") == 0)
+
+    call("DELETE", "/api/red")
+    for identifier, point_type in [("BOD-A", "bodega"), ("BAR-X", "barrio"), ("PR-Y", "punto_recogida")]:
+        call("POST", "/api/puntos", {"id": identifier, "tipo": point_type})
+    call("POST", "/api/conexiones", {"origen": "BOD-A", "destino": "BAR-X", "costo": 1})
+    call("POST", "/api/conexiones", {"origen": "BAR-X", "destino": "PR-Y", "costo": 1.0025})
+    status, body = call("GET", "/api/ruta/BOD-A/PR-Y")
+    check("CA-52. Redondeo al peso con 0,5 hacia arriba: 2.0025 min × 200 = 400,5 → 401",
+          "costo_total 2.0025 y costo_monetario.total 401",
+          f"costo_total {body.get('costo_total')} y total {body.get('costo_monetario', {}).get('total')}",
+          status == 200 and body.get("costo_total") == 2.0025 and body.get("costo_monetario", {}).get("total") == 401)
+
+    call("POST", "/api/red/ejemplo")
+    status, body = call("GET", "/api/ruta/BOD-CENTRO/PR-ESTACION")
+    check("CA-54. Los campos en minutos y el camino no cambiaron",
+          "BOD-CENTRO → BAR-SUR → PR-ESTACION, costo_total 18, tramos 8 y 10, comparación 30",
+          f"{arrows(body.get('camino'))}, costo_total {body.get('costo_total')}, "
+          f"tramos {[leg.get('costo') for leg in body.get('tramos', [])]}, "
+          f"comparación {body.get('comparacion_menos_saltos', {}).get('costo')}",
+          body.get("camino") == ["BOD-CENTRO", "BAR-SUR", "PR-ESTACION"] and body.get("costo_total") == 18
+          and [leg.get("costo") for leg in body.get("tramos", [])] == [8, 10]
+          and body.get("comparacion_menos_saltos", {}).get("costo") == 30)
+
+
 def visualization_scenarios():
     section("Visualización del resultado")
     status, content = call("GET", "/api/red/imagen/ruta/BOD-CENTRO/PR-ESTACION")
@@ -272,6 +333,7 @@ def main():
     nonexistent_and_invalid_scenarios()
     invalid_cost_scenarios()
     network_change_scenarios()
+    monetary_cost_scenarios()
     visualization_scenarios()
     call("DELETE", "/api/red")
 
