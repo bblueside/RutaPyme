@@ -15,7 +15,7 @@
       </svg>
       <div>
         <h1>RutaPyme</h1>
-        <p>Red operativa · Features 1 y 2</p>
+        <p>Red operativa · Features 1, 2 y 3</p>
       </div>
     </div>
     <div class="acciones">
@@ -101,6 +101,25 @@
       </form>
       <p class="ayuda">Sin destino se listan todos los puntos alcanzables; con destino se verifica ese punto. La red es dirigida: A → B no permite B → A.</p>
       <div id="resultado-cobertura" class="oculto" aria-live="polite"></div>
+    </section>
+
+    <section class="tarjeta" id="seccion-ruta">
+      <div class="titulo-tarjeta">
+        <h2>Ruta de menor costo</h2>
+        <span class="etiqueta">Dijkstra propio con cola de prioridad · responde “¿por dónde me sale más barato?”</span>
+      </div>
+      <form id="form-ruta" class="consulta-cobertura" autocomplete="off">
+        <label>Origen
+          <input name="origen" list="lista-puntos" placeholder="BOD-CENTRO">
+        </label>
+        <label>Destino
+          <input name="destino" list="lista-puntos" placeholder="PR-ESTACION">
+        </label>
+        <button class="boton" type="submit">Calcular ruta</button>
+        <button id="boton-limpiar-ruta" class="boton secundario" type="button">Quitar resaltado</button>
+      </form>
+      <p class="ayuda">El costo de una ruta es la suma de los minutos de sus trayectos, en el sentido registrado. Se compara con el camino de menos trayectos.</p>
+      <div id="resultado-ruta" class="oculto" aria-live="polite"></div>
     </section>
 
     <div class="rejilla">
