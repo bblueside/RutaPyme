@@ -7,8 +7,8 @@ Este archivo lo lee Claude Code al trabajar en el repositorio. Resume las reglas
 
 1. Backend en **Python 3.12+** con API REST construida con la biblioteca estándar (`http.server`, `json`).
 2. **Prohibido** instalar o importar bibliotecas externas en el backend (Flask, FastAPI, pydantic, pytest, requests...).
-3. El grafo y sus algoritmos son **propios** (`backend/red.py`). NetworkX **solo** se importa en
-   `backend/visualizacion.py` para dibujar datos que ya calculó nuestro código.
+3. El grafo y sus algoritmos son **propios** (`backend/network.py`). NetworkX **solo** se importa en
+   `backend/visualization.py` para dibujar datos que ya calculó nuestro código.
 4. El frontend (`frontend/`) usa **React + TypeScript con Vite** (acuerdo del equipo) y **consume la API real**.
    Se levanta con `npm run dev` desde `frontend/` (la restricción de "sin bibliotecas externas" aplica solo al backend).
 5. Solo datos sintéticos. Nunca datos personales reales.
@@ -25,6 +25,9 @@ Este archivo lo lee Claude Code al trabajar en el repositorio. Resume las reglas
 
 ## Convenciones
 
-- Código, nombres y mensajes en español, sin abreviaturas crípticas.
+- **Código en inglés** (archivos, clases, funciones, variables, comentarios y docstrings), sin abreviaturas crípticas.
+- **Contrato y mensajes en español:** rutas de la API, campos JSON, códigos de error, mensajes al usuario y
+  documentación. No se traducen porque el frontend y el cliente dependen de ellos.
+  Glosario de nombres antiguos → nuevos: `docs/codigo-en-ingles.md`.
 - Commits con prefijo: `feat:`, `fix:`, `docs:`, `test:`, `chore:`, `refactor:`.
 - Ramas: `feature/<n>-<nombre>`, `docs/<tema>`, `fix/<tema>`.

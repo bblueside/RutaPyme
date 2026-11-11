@@ -1,9 +1,11 @@
-"""API REST de RutaPyme construida solo con la biblioteca estándar (http.server).
+"""RutaPyme REST API built only with the standard library (http.server).
 
-También sirve los archivos de la interfaz web (carpeta frontend/legacy/), así que API e interfaz
-viven en el mismo servidor y la interfaz consume la API real.
-Contrato de endpoints: docs/feature-1/especificacion.md, docs/feature-2/especificacion.md y
-docs/feature-3/especificacion.md (sección 5 de cada una).
+It also serves the web interface files (frontend/legacy/ folder), so API and interface
+live on the same server and the interface consumes the real API.
+Endpoint contract: docs/feature-1/especificacion.md, docs/feature-2/especificacion.md and
+docs/feature-3/especificacion.md (section 5 of each one).
+The URLs, JSON fields, error codes and messages stay in Spanish: they are the contract
+the frontend and the client use.
 """
 
 import json
@@ -13,17 +15,17 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
-from backend import visualizacion
-from backend.red import TIPOS_PUNTO, ErrorRed, FormatoIncorrecto, RedOperativa
+from backend import visualization
+from backend.network import POINT_TYPES, BadFormat, NetworkError, OperationalNetwork
 
-RAIZ = Path(__file__).resolve().parent.parent
-CARPETA_FRONTEND = RAIZ / "frontend" / "legacy"
-ARCHIVO_EJEMPLO = RAIZ / "datos" / "red_ejemplo.json"
-TAMANO_MAXIMO_CUERPO = 10_000  # bytes; una petición de esta API nunca necesita más
+ROOT = Path(__file__).resolve().parent.parent
+FRONTEND_FOLDER = ROOT / "frontend" / "legacy"
+SAMPLE_FILE = ROOT / "datos" / "red_ejemplo.json"
+MAX_BODY_SIZE = 10_000  # bytes; a request to this API never needs more
 
-TIPO_JSON = "application/json; charset=utf-8"
+JSON_TYPE = "application/json; charset=utf-8"
 
-ESTADO_HTTP_POR_ERROR = {
+HTTP_STATUS_BY_ERROR = {
     "formato_incorrecto": 400,
     "dato_invalido": 400,
     "punto_inexistente": 404,
@@ -32,259 +34,260 @@ ESTADO_HTTP_POR_ERROR = {
     "red_vacia": 404,
 }
 
-ARCHIVOS_ESTATICOS = {
+STATIC_FILES = {
     "/": ("index.html", "text/html; charset=utf-8"),
     "/index.html": ("index.html", "text/html; charset=utf-8"),
     "/estilos.css": ("estilos.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
 }
 
-# (método, patrón de ruta, nombre del método que la atiende). {id} es un parámetro.
-RUTAS = [
-    ("GET", "/api/salud", "salud"),
-    ("GET", "/api/tipos", "listar_tipos"),
-    ("GET", "/api/puntos", "listar_puntos"),
-    ("POST", "/api/puntos", "crear_punto"),
-    ("GET", "/api/puntos/{id}", "obtener_punto"),
-    ("GET", "/api/conexiones", "listar_conexiones"),
-    ("POST", "/api/conexiones", "crear_conexion"),
-    ("GET", "/api/red", "ver_red"),
-    ("DELETE", "/api/red", "vaciar_red"),
-    ("GET", "/api/red/imagen", "ver_imagen"),
-    ("GET", "/api/red/imagen/cobertura/{origen}", "ver_imagen_cobertura"),
-    ("GET", "/api/red/imagen/ruta/{origen}/{destino}", "ver_imagen_ruta"),
-    ("POST", "/api/red/ejemplo", "cargar_ejemplo"),
-    ("GET", "/api/cobertura", "cobertura_sin_origen"),
-    ("GET", "/api/cobertura/{origen}", "consultar_cobertura"),
-    ("GET", "/api/cobertura/{origen}/{destino}", "verificar_cobertura"),
-    ("GET", "/api/ruta", "ruta_sin_parametros"),
-    ("GET", "/api/ruta/{origen}", "ruta_sin_destino"),
-    ("GET", "/api/ruta/{origen}/{destino}", "consultar_ruta"),
+# (method, path pattern, name of the handler method). {name} is a path parameter.
+ROUTES = [
+    ("GET", "/api/salud", "health"),
+    ("GET", "/api/tipos", "list_types"),
+    ("GET", "/api/puntos", "list_points"),
+    ("POST", "/api/puntos", "create_point"),
+    ("GET", "/api/puntos/{identifier}", "get_point"),
+    ("GET", "/api/conexiones", "list_connections"),
+    ("POST", "/api/conexiones", "create_connection"),
+    ("GET", "/api/red", "show_network"),
+    ("DELETE", "/api/red", "clear_network"),
+    ("GET", "/api/red/imagen", "show_image"),
+    ("GET", "/api/red/imagen/cobertura/{origin}", "show_coverage_image"),
+    ("GET", "/api/red/imagen/ruta/{origin}/{destination}", "show_route_image"),
+    ("POST", "/api/red/ejemplo", "load_sample"),
+    ("GET", "/api/cobertura", "coverage_without_origin"),
+    ("GET", "/api/cobertura/{origin}", "get_coverage"),
+    ("GET", "/api/cobertura/{origin}/{destination}", "check_coverage"),
+    ("GET", "/api/ruta", "route_without_parameters"),
+    ("GET", "/api/ruta/{origin}", "route_without_destination"),
+    ("GET", "/api/ruta/{origin}/{destination}", "get_route"),
 ]
 
 
-def cargar_red_ejemplo(red):
-    """Reemplaza la red por la red sintética de datos/red_ejemplo.json."""
-    red.cargar(json.loads(ARCHIVO_EJEMPLO.read_text(encoding="utf-8")))
+def load_sample_network(network):
+    """Replaces the network with the synthetic network in datos/red_ejemplo.json."""
+    network.load(json.loads(SAMPLE_FILE.read_text(encoding="utf-8")))
 
 
-def _coincidir(patron, ruta):
-    """Devuelve los parámetros de la ruta si coincide con el patrón, o None."""
-    partes_patron = patron.split("/")
-    partes_ruta = ruta.split("/")
-    if len(partes_patron) != len(partes_ruta):
+def _match(pattern, path):
+    """Returns the path parameters if the path matches the pattern, or None."""
+    pattern_parts = pattern.split("/")
+    path_parts = path.split("/")
+    if len(pattern_parts) != len(path_parts):
         return None
-    parametros = {}
-    for parte_patron, parte_ruta in zip(partes_patron, partes_ruta):
-        if parte_patron.startswith("{"):
-            parametros[parte_patron[1:-1]] = unquote(parte_ruta)
-        elif parte_patron != parte_ruta:
+    parameters = {}
+    for pattern_part, path_part in zip(pattern_parts, path_parts):
+        if pattern_part.startswith("{"):
+            parameters[pattern_part[1:-1]] = unquote(path_part)
+        elif pattern_part != path_part:
             return None
-    return parametros
+    return parameters
 
 
-class ManejadorRutaPyme(BaseHTTPRequestHandler):
+class RutaPymeHandler(BaseHTTPRequestHandler):
     server_version = "RutaPyme/1.0"
 
-    # --- Entrada ----------------------------------------------------------
+    # --- Input ------------------------------------------------------------
 
     def do_GET(self):
-        self._atender("GET")
+        self._dispatch("GET")
 
     def do_POST(self):
-        self._atender("POST")
+        self._dispatch("POST")
 
     def do_DELETE(self):
-        self._atender("DELETE")
+        self._dispatch("DELETE")
 
     def do_PUT(self):
-        self._atender("PUT")
+        self._dispatch("PUT")
 
     def do_PATCH(self):
-        self._atender("PATCH")
+        self._dispatch("PATCH")
 
-    def _atender(self, metodo):
-        ruta = urlsplit(self.path).path
-        if ruta != "/":
-            ruta = ruta.rstrip("/")
+    def _dispatch(self, method):
+        path = urlsplit(self.path).path
+        if path != "/":
+            path = path.rstrip("/")
 
-        if metodo == "GET" and ruta in ARCHIVOS_ESTATICOS:
-            self._enviar_estatico(*ARCHIVOS_ESTATICOS[ruta])
+        if method == "GET" and path in STATIC_FILES:
+            self._send_static(*STATIC_FILES[path])
             return
 
-        metodos_permitidos = []
-        for metodo_ruta, patron, nombre in RUTAS:
-            parametros = _coincidir(patron, ruta)
-            if parametros is None:
+        allowed_methods = []
+        for route_method, pattern, name in ROUTES:
+            parameters = _match(pattern, path)
+            if parameters is None:
                 continue
-            if metodo_ruta == metodo:
-                self._ejecutar(getattr(self, nombre), parametros)
+            if route_method == method:
+                self._run(getattr(self, name), parameters)
                 return
-            metodos_permitidos.append(metodo_ruta)
+            allowed_methods.append(route_method)
 
-        if metodos_permitidos:
-            self._enviar_error(405, "metodo_no_permitido",
-                               f"{metodo} no está permitido en {ruta}. Use: {', '.join(metodos_permitidos)}.")
+        if allowed_methods:
+            self._send_error(405, "metodo_no_permitido",
+                             f"{method} no está permitido en {path}. Use: {', '.join(allowed_methods)}.")
         else:
-            self._enviar_error(404, "ruta_no_encontrada", f"No existe el endpoint {ruta}.")
+            self._send_error(404, "ruta_no_encontrada", f"No existe el endpoint {path}.")
 
-    def _ejecutar(self, manejador, parametros):
+    def _run(self, handler, parameters):
         try:
-            # El candado evita que dos peticiones modifiquen la red al mismo tiempo.
-            with self.server.candado:
-                manejador(**parametros)
-        except ErrorRed as error:
-            self._enviar_error(ESTADO_HTTP_POR_ERROR.get(error.codigo, 400), error.codigo, error.mensaje)
+            # The lock prevents two requests from modifying the network at the same time.
+            with self.server.lock:
+                handler(**parameters)
+        except NetworkError as error:
+            self._send_error(HTTP_STATUS_BY_ERROR.get(error.code, 400), error.code, error.message)
         except Exception:
             traceback.print_exc()
-            self._enviar_error(500, "error_interno", "Ocurrió un error inesperado en el servidor.")
+            self._send_error(500, "error_interno", "Ocurrió un error inesperado en el servidor.")
 
-    def _leer_cuerpo(self):
-        """Lee los bytes del cuerpo según Content-Length (puede estar vacío)."""
+    def _read_body(self):
+        """Reads the body bytes according to Content-Length (it may be empty)."""
         try:
-            longitud = int(self.headers.get("Content-Length") or 0)
+            length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
-            raise FormatoIncorrecto("El encabezado Content-Length no es válido.")
-        if longitud > TAMANO_MAXIMO_CUERPO:
-            raise FormatoIncorrecto(f"El cuerpo supera el máximo de {TAMANO_MAXIMO_CUERPO} bytes.")
-        return self.rfile.read(longitud) if longitud > 0 else b""
+            raise BadFormat("El encabezado Content-Length no es válido.")
+        if length > MAX_BODY_SIZE:
+            raise BadFormat(f"El cuerpo supera el máximo de {MAX_BODY_SIZE} bytes.")
+        return self.rfile.read(length) if length > 0 else b""
 
-    def _leer_json(self):
-        """Interpreta el cuerpo como objeto JSON o lanza FormatoIncorrecto (CA-11)."""
-        crudo = self._leer_cuerpo()
-        if not crudo:
-            raise FormatoIncorrecto("El cuerpo de la petición está vacío. Envíe un objeto JSON.")
+    def _read_json(self):
+        """Parses the body as a JSON object or raises BadFormat (CA-11)."""
+        raw = self._read_body()
+        if not raw:
+            raise BadFormat("El cuerpo de la petición está vacío. Envíe un objeto JSON.")
         try:
-            datos = json.loads(crudo.decode("utf-8"))
+            data = json.loads(raw.decode("utf-8"))
         except (UnicodeDecodeError, ValueError):
-            raise FormatoIncorrecto('El cuerpo no es JSON válido. Ejemplo: {"id": "BOD-CENTRO", "tipo": "bodega"}.')
-        if not isinstance(datos, dict):
-            raise FormatoIncorrecto("El cuerpo debe ser un objeto JSON (entre llaves { }).")
-        return datos
+            raise BadFormat('El cuerpo no es JSON válido. Ejemplo: {"id": "BOD-CENTRO", "tipo": "bodega"}.')
+        if not isinstance(data, dict):
+            raise BadFormat("El cuerpo debe ser un objeto JSON (entre llaves { }).")
+        return data
 
     # --- Endpoints --------------------------------------------------------
 
     @property
-    def red(self):
-        return self.server.red
+    def network(self):
+        return self.server.network
 
-    def salud(self):
-        self._enviar_json(200, {"estado": "ok", "servicio": "RutaPyme API", "feature": 3})
+    def health(self):
+        self._send_json(200, {"estado": "ok", "servicio": "RutaPyme API", "feature": 3})
 
-    def listar_tipos(self):
-        self._enviar_json(200, {"tipos": list(TIPOS_PUNTO)})
+    def list_types(self):
+        self._send_json(200, {"tipos": list(POINT_TYPES)})
 
-    def listar_puntos(self):
-        puntos = self.red.listar_puntos()
-        self._enviar_json(200, {"total": len(puntos), "puntos": puntos})
+    def list_points(self):
+        points = self.network.list_points()
+        self._send_json(200, {"total": len(points), "puntos": points})
 
-    def crear_punto(self):
-        datos = self._leer_json()
-        punto = self.red.agregar_punto(datos.get("id"), datos.get("tipo"))
-        self._enviar_json(201, {"mensaje": f"Punto {punto['id']} registrado.", "punto": punto})
+    def create_point(self):
+        data = self._read_json()
+        point = self.network.add_point(data.get("id"), data.get("tipo"))
+        self._send_json(201, {"mensaje": f"Punto {point['id']} registrado.", "punto": point})
 
-    def obtener_punto(self, id):
-        punto = self.red.obtener_punto(id)
-        salidas = [{"destino": destino, "costo": costo} for destino, costo in self.red.vecinos(id).items()]
-        self._enviar_json(200, {"punto": punto, "salidas": salidas})
+    def get_point(self, identifier):
+        point = self.network.get_point(identifier)
+        outgoing = [{"destino": destination, "costo": cost}
+                    for destination, cost in self.network.neighbors(identifier).items()]
+        self._send_json(200, {"punto": point, "salidas": outgoing})
 
-    def listar_conexiones(self):
-        conexiones = self.red.listar_conexiones()
-        self._enviar_json(200, {"total": len(conexiones), "conexiones": conexiones})
+    def list_connections(self):
+        connections = self.network.list_connections()
+        self._send_json(200, {"total": len(connections), "conexiones": connections})
 
-    def crear_conexion(self):
-        datos = self._leer_json()
-        conexion = self.red.agregar_conexion(datos.get("origen"), datos.get("destino"), datos.get("costo"))
-        self._enviar_json(201, {
-            "mensaje": f"Conexión {conexion['origen']} → {conexion['destino']} registrada.",
-            "conexion": conexion,
+    def create_connection(self):
+        data = self._read_json()
+        connection = self.network.add_connection(data.get("origen"), data.get("destino"), data.get("costo"))
+        self._send_json(201, {
+            "mensaje": f"Conexión {connection['origen']} → {connection['destino']} registrada.",
+            "conexion": connection,
         })
 
-    def ver_red(self):
-        self._enviar_json(200, self.red.representacion())
+    def show_network(self):
+        self._send_json(200, self.network.representation())
 
-    def vaciar_red(self):
-        self.red.vaciar()
-        self._enviar_json(200, {"mensaje": "La red quedó vacía."})
+    def clear_network(self):
+        self.network.clear()
+        self._send_json(200, {"mensaje": "La red quedó vacía."})
 
-    def cargar_ejemplo(self):
-        cargar_red_ejemplo(self.red)
-        self._enviar_json(201, {
+    def load_sample(self):
+        load_sample_network(self.network)
+        self._send_json(201, {
             "mensaje": "Red de ejemplo cargada.",
-            "resumen": self.red.representacion()["resumen"],
+            "resumen": self.network.representation()["resumen"],
         })
 
-    def cobertura_sin_origen(self):
-        raise FormatoIncorrecto("Indique el punto de origen en la ruta: /api/cobertura/{origen} "
-                                "o /api/cobertura/{origen}/{destino}.")
+    def coverage_without_origin(self):
+        raise BadFormat("Indique el punto de origen en la ruta: /api/cobertura/{origen} "
+                        "o /api/cobertura/{origen}/{destino}.")
 
-    def consultar_cobertura(self, origen):
-        self._enviar_json(200, self.red.cobertura(origen))
+    def get_coverage(self, origin):
+        self._send_json(200, self.network.coverage(origin))
 
-    def verificar_cobertura(self, origen, destino):
-        self._enviar_json(200, self.red.verificar_cobertura(origen, destino))
+    def check_coverage(self, origin, destination):
+        self._send_json(200, self.network.check_coverage(origin, destination))
 
-    def ruta_sin_parametros(self):
-        raise FormatoIncorrecto("Indique el origen y el destino en la ruta: /api/ruta/{origen}/{destino}.")
+    def route_without_parameters(self):
+        raise BadFormat("Indique el origen y el destino en la ruta: /api/ruta/{origen}/{destino}.")
 
-    def ruta_sin_destino(self, origen):
-        raise FormatoIncorrecto(f"Falta el destino. Use /api/ruta/{origen}/{{destino}}.")
+    def route_without_destination(self, origin):
+        raise BadFormat(f"Falta el destino. Use /api/ruta/{origin}/{{destino}}.")
 
-    def consultar_ruta(self, origen, destino):
-        self._enviar_json(200, self.red.ruta_menor_costo(origen, destino))
+    def get_route(self, origin, destination):
+        self._send_json(200, self.network.cheapest_route(origin, destination))
 
-    def ver_imagen(self):
-        if not self._visualizacion_disponible():
+    def show_image(self):
+        if not self._visualization_available():
             return
-        self._enviar(200, visualizacion.dibujar_red(self.red), "image/png")
+        self._send(200, visualization.draw_network(self.network), "image/png")
 
-    def ver_imagen_cobertura(self, origen):
-        # Primero nuestro recorrido calcula la cobertura (y valida el origen); NetworkX solo la pinta.
-        cobertura = self.red.cobertura(origen)
-        if not self._visualizacion_disponible():
+    def show_coverage_image(self, origin):
+        # Our traversal computes the coverage first (and validates the origin); NetworkX only draws it.
+        coverage = self.network.coverage(origin)
+        if not self._visualization_available():
             return
-        self._enviar(200, visualizacion.dibujar_red(self.red, cobertura), "image/png")
+        self._send(200, visualization.draw_network(self.network, coverage), "image/png")
 
-    def ver_imagen_ruta(self, origen, destino):
-        # Nuestro Dijkstra calcula la ruta (y valida origen, destino y costos); NetworkX solo la pinta.
-        ruta = self.red.ruta_menor_costo(origen, destino)
-        if not self._visualizacion_disponible():
+    def show_route_image(self, origin, destination):
+        # Our Dijkstra computes the route (and validates origin, destination and costs); NetworkX only draws it.
+        route = self.network.cheapest_route(origin, destination)
+        if not self._visualization_available():
             return
-        self._enviar(200, visualizacion.dibujar_red(self.red, ruta=ruta), "image/png")
+        self._send(200, visualization.draw_network(self.network, route=route), "image/png")
 
-    def _visualizacion_disponible(self):
-        if not visualizacion.DISPONIBLE:
-            self._enviar_error(503, "visualizacion_no_disponible",
-                               "Instale las dependencias con: pip install -r requirements.txt")
-        return visualizacion.DISPONIBLE
+    def _visualization_available(self):
+        if not visualization.AVAILABLE:
+            self._send_error(503, "visualizacion_no_disponible",
+                             "Instale las dependencias con: pip install -r requirements.txt")
+        return visualization.AVAILABLE
 
-    # --- Salida -----------------------------------------------------------
+    # --- Output -----------------------------------------------------------
 
-    def _enviar(self, estado, cuerpo, tipo_contenido):
-        self.send_response(estado)
-        self.send_header("Content-Type", tipo_contenido)
-        self.send_header("Content-Length", str(len(cuerpo)))
+    def _send(self, status, body, content_type):
+        self.send_response(status)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(cuerpo)
+        self.wfile.write(body)
 
-    def _enviar_json(self, estado, datos):
-        cuerpo = json.dumps(datos, ensure_ascii=False, indent=2).encode("utf-8")
-        self._enviar(estado, cuerpo, TIPO_JSON)
+    def _send_json(self, status, data):
+        body = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+        self._send(status, body, JSON_TYPE)
 
-    def _enviar_error(self, estado, codigo, mensaje):
-        self._enviar_json(estado, {"error": {"codigo": codigo, "mensaje": mensaje}})
+    def _send_error(self, status, code, message):
+        self._send_json(status, {"error": {"codigo": code, "mensaje": message}})
 
-    def _enviar_estatico(self, nombre_archivo, tipo_contenido):
-        self._enviar(200, (CARPETA_FRONTEND / nombre_archivo).read_bytes(), tipo_contenido)
+    def _send_static(self, file_name, content_type):
+        self._send(200, (FRONTEND_FOLDER / file_name).read_bytes(), content_type)
 
-    def log_message(self, formato, *argumentos):
-        print(f"[API] {self.log_date_time_string()} {formato % argumentos}", flush=True)
+    def log_message(self, format, *args):
+        print(f"[API] {self.log_date_time_string()} {format % args}", flush=True)
 
 
-def crear_servidor(host="127.0.0.1", puerto=8000, red=None):
-    """Crea el servidor HTTP con su propia red en memoria."""
-    servidor = ThreadingHTTPServer((host, puerto), ManejadorRutaPyme)
-    servidor.red = red if red is not None else RedOperativa()
-    servidor.candado = threading.Lock()
-    return servidor
+def create_server(host="127.0.0.1", port=8000, network=None):
+    """Creates the HTTP server with its own in-memory network."""
+    server = ThreadingHTTPServer((host, port), RutaPymeHandler)
+    server.network = network if network is not None else OperationalNetwork()
+    server.lock = threading.Lock()
+    return server

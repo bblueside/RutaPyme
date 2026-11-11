@@ -1,15 +1,15 @@
-"""Punto de entrada: inicia la API REST y la interfaz web de RutaPyme.
+"""Entry point: starts the RutaPyme REST API and web interface.
 
-Uso:
-    python main.py              # red vacía en http://127.0.0.1:8000
-    python main.py --ejemplo    # arranca con la red sintética de datos/red_ejemplo.json
+Usage:
+    python main.py              # empty network at http://127.0.0.1:8000
+    python main.py --ejemplo    # starts with the synthetic network from datos/red_ejemplo.json
 """
 
 import argparse
 import os
 import sys
 
-from backend.api import cargar_red_ejemplo, crear_servidor
+from backend.api import create_server, load_sample_network
 
 
 def main():
@@ -17,24 +17,24 @@ def main():
     parser = argparse.ArgumentParser(description="Servidor de RutaPyme (API REST + interfaz web).")
     parser.add_argument("--host", default=os.environ.get("HOST", "127.0.0.1"),
                         help="Dirección de escucha (use 0.0.0.0 al desplegar).")
-    parser.add_argument("--puerto", type=int, default=int(os.environ.get("PORT", "8000")),
+    parser.add_argument("--puerto", dest="port", type=int, default=int(os.environ.get("PORT", "8000")),
                         help="Puerto HTTP (por defecto 8000 o la variable PORT).")
-    parser.add_argument("--ejemplo", action="store_true",
+    parser.add_argument("--ejemplo", dest="sample", action="store_true",
                         help="Carga la red sintética de datos/red_ejemplo.json al iniciar.")
-    argumentos = parser.parse_args()
+    args = parser.parse_args()
 
-    servidor = crear_servidor(argumentos.host, argumentos.puerto)
-    if argumentos.ejemplo:
-        cargar_red_ejemplo(servidor.red)
+    server = create_server(args.host, args.port)
+    if args.sample:
+        load_sample_network(server.network)
         print("Red de ejemplo cargada.")
 
-    print(f"RutaPyme escuchando en http://{argumentos.host}:{argumentos.puerto}  (Ctrl+C para detener)")
+    print(f"RutaPyme escuchando en http://{args.host}:{args.port}  (Ctrl+C para detener)")
     try:
-        servidor.serve_forever()
+        server.serve_forever()
     except KeyboardInterrupt:
         print("\nServidor detenido.")
     finally:
-        servidor.server_close()
+        server.server_close()
 
 
 if __name__ == "__main__":

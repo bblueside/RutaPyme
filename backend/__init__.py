@@ -1,1 +1,1 @@
-"""Backend de RutaPyme: grafo propio, API REST y visualización."""
+"""RutaPyme backend: our own graph, REST API and visualization."""

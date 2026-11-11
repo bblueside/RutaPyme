@@ -1,13 +1,13 @@
-"""Pruebas de aceptación de la Feature 1 (red operativa) contra la API REST local.
+"""Acceptance tests for Feature 1 (operational network) against the local REST API.
 
-Uso:
-    python main.py                               # terminal 1: servidor
-    python pruebas/aceptacion_feature1.py        # terminal 2: pruebas
-    python pruebas/aceptacion_feature1.py http://127.0.0.1:8000   # URL base opcional
+Usage:
+    python main.py                               # terminal 1: server
+    python pruebas/aceptacion_feature1.py        # terminal 2: tests
+    python pruebas/aceptacion_feature1.py http://127.0.0.1:8000   # optional base URL
 
-Solo usa la biblioteca estándar (urllib). Para cada escenario imprime qué se ejecutó,
-qué se esperaba, qué se obtuvo y si pasó o falló. Empieza vaciando la red (DELETE /api/red),
-por lo que se puede repetir cuantas veces se quiera.
+Uses only the standard library (urllib). For each scenario it prints what was run,
+what was expected, what was obtained and whether it passed or failed. It starts by clearing
+the network (DELETE /api/red), so it can be repeated as many times as desired.
 """
 
 import json
@@ -15,210 +15,210 @@ import sys
 import urllib.error
 import urllib.request
 
-URL_BASE = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000").rstrip("/")
-resultados = []
+BASE_URL = (sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8000").rstrip("/")
+results = []
 
 
 # ---------------------------------------------------------------------------
-# Apoyo
+# Helpers
 # ---------------------------------------------------------------------------
 
-def llamar(metodo, ruta, cuerpo=None, crudo=None):
-    """Hace la petición y devuelve (estado HTTP, cuerpo JSON o bytes, tipo de contenido)."""
-    datos = crudo if crudo is not None else (json.dumps(cuerpo).encode("utf-8") if cuerpo is not None else None)
-    encabezados = {"Content-Type": "application/json"} if datos is not None else {}
-    peticion = urllib.request.Request(URL_BASE + ruta, data=datos, method=metodo, headers=encabezados)
+def call(method, path, body=None, raw=None):
+    """Sends the request and returns (HTTP status, JSON body or bytes, content type)."""
+    data = raw if raw is not None else (json.dumps(body).encode("utf-8") if body is not None else None)
+    headers = {"Content-Type": "application/json"} if data is not None else {}
+    request = urllib.request.Request(BASE_URL + path, data=data, method=method, headers=headers)
     try:
-        with urllib.request.urlopen(peticion, timeout=15) as respuesta:
-            estado, tipo, contenido = respuesta.status, respuesta.headers.get("Content-Type", ""), respuesta.read()
+        with urllib.request.urlopen(request, timeout=15) as response:
+            status, content_type, content = response.status, response.headers.get("Content-Type", ""), response.read()
     except urllib.error.HTTPError as error:
-        estado, tipo, contenido = error.code, error.headers.get("Content-Type", ""), error.read()
-    if tipo.startswith("application/json"):
-        return estado, json.loads(contenido.decode("utf-8")), tipo
-    return estado, contenido, tipo
+        status, content_type, content = error.code, error.headers.get("Content-Type", ""), error.read()
+    if content_type.startswith("application/json"):
+        return status, json.loads(content.decode("utf-8")), content_type
+    return status, content, content_type
 
 
-def codigo_error(cuerpo):
-    return cuerpo.get("error", {}).get("codigo") if isinstance(cuerpo, dict) else None
+def error_code(body):
+    return body.get("error", {}).get("codigo") if isinstance(body, dict) else None
 
 
-def verificar(nombre, esperado, obtenido, paso):
-    resultados.append(paso)
-    marca = "PASÓ" if paso else "FALLÓ"
-    print(f"[{marca}] {len(resultados):02d}. {nombre}")
-    print(f"        Esperado: {esperado}")
-    print(f"        Obtenido: {obtenido}")
+def check(name, expected, obtained, passed):
+    results.append(passed)
+    mark = "PASÓ" if passed else "FALLÓ"
+    print(f"[{mark}] {len(results):02d}. {name}")
+    print(f"        Esperado: {expected}")
+    print(f"        Obtenido: {obtained}")
 
 
-def esperar_error(nombre, metodo, ruta, cuerpo, estado_esperado, codigo_esperado, crudo=None):
-    estado, respuesta, _ = llamar(metodo, ruta, cuerpo, crudo)
-    obtenido = f"{estado} {codigo_error(respuesta)}"
-    if isinstance(respuesta, dict) and "error" in respuesta:
-        obtenido += f" — «{respuesta['error']['mensaje']}»"
-    verificar(nombre, f"{estado_esperado} {codigo_esperado}", obtenido,
-              estado == estado_esperado and codigo_error(respuesta) == codigo_esperado)
-    return respuesta
+def expect_error(name, method, path, body, expected_status, expected_code, raw=None):
+    status, response, _ = call(method, path, body, raw)
+    obtained = f"{status} {error_code(response)}"
+    if isinstance(response, dict) and "error" in response:
+        obtained += f" — «{response['error']['mensaje']}»"
+    check(name, f"{expected_status} {expected_code}", obtained,
+          status == expected_status and error_code(response) == expected_code)
+    return response
 
 
-def resumen_red():
-    _, red, _ = llamar("GET", "/api/red")
-    return red["resumen"]["puntos"], red["resumen"]["conexiones"]
+def network_summary():
+    _, network, _ = call("GET", "/api/red")
+    return network["resumen"]["puntos"], network["resumen"]["conexiones"]
 
 
-def seccion(titulo):
-    print(f"\n=== {titulo} ===")
+def section(title):
+    print(f"\n=== {title} ===")
 
 
 # ---------------------------------------------------------------------------
-# Escenarios
+# Scenarios
 # ---------------------------------------------------------------------------
 
-def escenarios_red_vacia():
-    seccion("Grafo vacío")
-    estado, red, _ = llamar("GET", "/api/red")
-    verificar("Consultar la red sin datos",
-              "200, 0 puntos, 0 conexiones, red dirigida",
-              f"{estado}, {red['resumen']['puntos']} puntos, {red['resumen']['conexiones']} conexiones, dirigida={red['dirigida']}",
-              estado == 200 and red["resumen"]["puntos"] == 0 and red["resumen"]["conexiones"] == 0 and red["dirigida"] is True)
+def empty_network_scenarios():
+    section("Grafo vacío")
+    status, network, _ = call("GET", "/api/red")
+    check("Consultar la red sin datos",
+          "200, 0 puntos, 0 conexiones, red dirigida",
+          f"{status}, {network['resumen']['puntos']} puntos, {network['resumen']['conexiones']} conexiones, dirigida={network['dirigida']}",
+          status == 200 and network["resumen"]["puntos"] == 0 and network["resumen"]["conexiones"] == 0 and network["dirigida"] is True)
 
-    estado, puntos, _ = llamar("GET", "/api/puntos")
-    verificar("Listar puntos sin datos", "200 con total 0", f"{estado} con total {puntos['total']}",
-              estado == 200 and puntos["total"] == 0)
-
-
-def escenarios_normales():
-    seccion("Escenario normal de negocio")
-    puntos = [("BOD-CENTRO", "bodega"), ("bar-norte", "barrio"), ("BAR-SUR", "barrio"), ("PR-ESTACION", "punto_recogida")]
-    respuestas = [llamar("POST", "/api/puntos", {"id": identificador, "tipo": tipo}) for identificador, tipo in puntos]
-    estados = [estado for estado, _, _ in respuestas]
-    ids = [cuerpo["punto"]["id"] for estado, cuerpo, _ in respuestas if estado == 201]
-    verificar("Registrar 4 puntos (uno escrito en minúsculas)",
-              "4 × 201 e ids ['BOD-CENTRO', 'BAR-NORTE', 'BAR-SUR', 'PR-ESTACION']",
-              f"{estados} e ids {ids}",
-              estados == [201] * 4 and ids == ["BOD-CENTRO", "BAR-NORTE", "BAR-SUR", "PR-ESTACION"])
-
-    conexiones = [("BOD-CENTRO", "BAR-NORTE", 12), ("BOD-CENTRO", "BAR-SUR", 8), ("BAR-SUR", "PR-ESTACION", 10.5)]
-    estados = [llamar("POST", "/api/conexiones", {"origen": o, "destino": d, "costo": c})[0] for o, d, c in conexiones]
-    verificar("Registrar 3 conexiones (una con costo decimal)", "3 × 201", f"{estados}", estados == [201] * 3)
-
-    estado, cuerpo, _ = llamar("GET", "/api/puntos")
-    orden = [p["id"] for p in cuerpo["puntos"]]
-    verificar("Listar puntos en orden de registro",
-              "200, total 4, orden BOD-CENTRO, BAR-NORTE, BAR-SUR, PR-ESTACION",
-              f"{estado}, total {cuerpo['total']}, orden {', '.join(orden)}",
-              estado == 200 and cuerpo["total"] == 4 and orden == ["BOD-CENTRO", "BAR-NORTE", "BAR-SUR", "PR-ESTACION"])
-
-    estado, cuerpo, _ = llamar("GET", "/api/conexiones")
-    verificar("Listar conexiones", "200 con total 3", f"{estado} con total {cuerpo['total']}",
-              estado == 200 and cuerpo["total"] == 3)
-
-    estado, red, _ = llamar("GET", "/api/red")
-    salidas = {s["destino"]: s["costo"] for s in red["lista_adyacencia"]["BOD-CENTRO"]}
-    linea = red["texto"][0]
-    verificar("Representación legible (lista de adyacencia y texto)",
-              "BOD-CENTRO → {BAR-NORTE: 12, BAR-SUR: 8} y texto 'BOD-CENTRO [bodega] → BAR-NORTE (12 min), BAR-SUR (8 min)'",
-              f"BOD-CENTRO → {salidas} y texto '{linea}'",
-              estado == 200 and salidas == {"BAR-NORTE": 12, "BAR-SUR": 8}
-              and linea == "BOD-CENTRO [bodega] → BAR-NORTE (12 min), BAR-SUR (8 min)")
-
-    estado, cuerpo, _ = llamar("GET", "/api/puntos/bod-centro")
-    verificar("Consultar un punto y sus salidas", "200, tipo bodega, 2 salidas",
-              f"{estado}, tipo {cuerpo['punto']['tipo']}, {len(cuerpo['salidas'])} salidas",
-              estado == 200 and cuerpo["punto"]["tipo"] == "bodega" and len(cuerpo["salidas"]) == 2)
+    status, points, _ = call("GET", "/api/puntos")
+    check("Listar puntos sin datos", "200 con total 0", f"{status} con total {points['total']}",
+          status == 200 and points["total"] == 0)
 
 
-def escenarios_direccion():
-    seccion("Relación inexistente y dirección")
-    estado, cuerpo, _ = llamar("GET", "/api/puntos/BAR-NORTE")
-    verificar("A→B no crea B→A (BAR-NORTE no tiene salida a BOD-CENTRO)",
-              "200 y salidas []", f"{estado} y salidas {cuerpo['salidas']}",
-              estado == 200 and cuerpo["salidas"] == [])
+def normal_scenarios():
+    section("Escenario normal de negocio")
+    points = [("BOD-CENTRO", "bodega"), ("bar-norte", "barrio"), ("BAR-SUR", "barrio"), ("PR-ESTACION", "punto_recogida")]
+    responses = [call("POST", "/api/puntos", {"id": identifier, "tipo": point_type}) for identifier, point_type in points]
+    statuses = [status for status, _, _ in responses]
+    ids = [body["punto"]["id"] for status, body, _ in responses if status == 201]
+    check("Registrar 4 puntos (uno escrito en minúsculas)",
+          "4 × 201 e ids ['BOD-CENTRO', 'BAR-NORTE', 'BAR-SUR', 'PR-ESTACION']",
+          f"{statuses} e ids {ids}",
+          statuses == [201] * 4 and ids == ["BOD-CENTRO", "BAR-NORTE", "BAR-SUR", "PR-ESTACION"])
 
-    estado, cuerpo, _ = llamar("POST", "/api/conexiones", {"origen": "BAR-NORTE", "destino": "BOD-CENTRO", "costo": 15})
-    _, red, _ = llamar("GET", "/api/red")
-    regreso = red["lista_adyacencia"]["BAR-NORTE"]
-    verificar("Ciclo permitido: registrar el sentido contrario con otro costo",
-              "201 y BAR-NORTE → [BOD-CENTRO 15]", f"{estado} y BAR-NORTE → {regreso}",
-              estado == 201 and regreso == [{"destino": "BOD-CENTRO", "costo": 15}])
+    connections = [("BOD-CENTRO", "BAR-NORTE", 12), ("BOD-CENTRO", "BAR-SUR", 8), ("BAR-SUR", "PR-ESTACION", 10.5)]
+    statuses = [call("POST", "/api/conexiones", {"origen": o, "destino": d, "costo": c})[0] for o, d, c in connections]
+    check("Registrar 3 conexiones (una con costo decimal)", "3 × 201", f"{statuses}", statuses == [201] * 3)
+
+    status, body, _ = call("GET", "/api/puntos")
+    order = [p["id"] for p in body["puntos"]]
+    check("Listar puntos en orden de registro",
+          "200, total 4, orden BOD-CENTRO, BAR-NORTE, BAR-SUR, PR-ESTACION",
+          f"{status}, total {body['total']}, orden {', '.join(order)}",
+          status == 200 and body["total"] == 4 and order == ["BOD-CENTRO", "BAR-NORTE", "BAR-SUR", "PR-ESTACION"])
+
+    status, body, _ = call("GET", "/api/conexiones")
+    check("Listar conexiones", "200 con total 3", f"{status} con total {body['total']}",
+          status == 200 and body["total"] == 3)
+
+    status, network, _ = call("GET", "/api/red")
+    outgoing = {s["destino"]: s["costo"] for s in network["lista_adyacencia"]["BOD-CENTRO"]}
+    line = network["texto"][0]
+    check("Representación legible (lista de adyacencia y texto)",
+          "BOD-CENTRO → {BAR-NORTE: 12, BAR-SUR: 8} y texto 'BOD-CENTRO [bodega] → BAR-NORTE (12 min), BAR-SUR (8 min)'",
+          f"BOD-CENTRO → {outgoing} y texto '{line}'",
+          status == 200 and outgoing == {"BAR-NORTE": 12, "BAR-SUR": 8}
+          and line == "BOD-CENTRO [bodega] → BAR-NORTE (12 min), BAR-SUR (8 min)")
+
+    status, body, _ = call("GET", "/api/puntos/bod-centro")
+    check("Consultar un punto y sus salidas", "200, tipo bodega, 2 salidas",
+          f"{status}, tipo {body['punto']['tipo']}, {len(body['salidas'])} salidas",
+          status == 200 and body["punto"]["tipo"] == "bodega" and len(body["salidas"]) == 2)
 
 
-def escenarios_inexistentes():
-    seccion("Nodo inexistente")
-    esperar_error("Conexión hacia un destino inexistente", "POST", "/api/conexiones",
-                  {"origen": "BOD-CENTRO", "destino": "BAR-OESTE", "costo": 5}, 404, "punto_inexistente")
-    esperar_error("Conexión desde un origen inexistente", "POST", "/api/conexiones",
-                  {"origen": "BOD-NORTE", "destino": "BAR-SUR", "costo": 5}, 404, "punto_inexistente")
-    esperar_error("Consultar un punto inexistente", "GET", "/api/puntos/NO-EXISTE", None, 404, "punto_inexistente")
+def direction_scenarios():
+    section("Relación inexistente y dirección")
+    status, body, _ = call("GET", "/api/puntos/BAR-NORTE")
+    check("A→B no crea B→A (BAR-NORTE no tiene salida a BOD-CENTRO)",
+          "200 y salidas []", f"{status} y salidas {body['salidas']}",
+          status == 200 and body["salidas"] == [])
+
+    status, body, _ = call("POST", "/api/conexiones", {"origen": "BAR-NORTE", "destino": "BOD-CENTRO", "costo": 15})
+    _, network, _ = call("GET", "/api/red")
+    return_trip = network["lista_adyacencia"]["BAR-NORTE"]
+    check("Ciclo permitido: registrar el sentido contrario con otro costo",
+          "201 y BAR-NORTE → [BOD-CENTRO 15]", f"{status} y BAR-NORTE → {return_trip}",
+          status == 201 and return_trip == [{"destino": "BOD-CENTRO", "costo": 15}])
 
 
-def escenarios_invalidos():
-    seccion("Datos inválidos")
-    esperar_error("Punto duplicado (mismo id en minúsculas)", "POST", "/api/puntos",
-                  {"id": "bod-centro", "tipo": "bodega"}, 409, "punto_duplicado")
-    esperar_error("Tipo de punto inválido", "POST", "/api/puntos", {"id": "HOSP-1", "tipo": "hospital"}, 400, "dato_invalido")
-    esperar_error("Identificador con espacios internos", "POST", "/api/puntos", {"id": "BAR NORTE", "tipo": "barrio"}, 400, "dato_invalido")
-    esperar_error("Identificador vacío", "POST", "/api/puntos", {"id": "   ", "tipo": "barrio"}, 400, "dato_invalido")
-    esperar_error("Punto sin tipo", "POST", "/api/puntos", {"id": "BAR-ESTE"}, 400, "formato_incorrecto")
-    esperar_error("Conexión duplicada (aunque con otro costo)", "POST", "/api/conexiones",
-                  {"origen": "BOD-CENTRO", "destino": "BAR-NORTE", "costo": 20}, 409, "conexion_duplicada")
+def nonexistent_scenarios():
+    section("Nodo inexistente")
+    expect_error("Conexión hacia un destino inexistente", "POST", "/api/conexiones",
+                 {"origen": "BOD-CENTRO", "destino": "BAR-OESTE", "costo": 5}, 404, "punto_inexistente")
+    expect_error("Conexión desde un origen inexistente", "POST", "/api/conexiones",
+                 {"origen": "BOD-NORTE", "destino": "BAR-SUR", "costo": 5}, 404, "punto_inexistente")
+    expect_error("Consultar un punto inexistente", "GET", "/api/puntos/NO-EXISTE", None, 404, "punto_inexistente")
+
+
+def invalid_scenarios():
+    section("Datos inválidos")
+    expect_error("Punto duplicado (mismo id en minúsculas)", "POST", "/api/puntos",
+                 {"id": "bod-centro", "tipo": "bodega"}, 409, "punto_duplicado")
+    expect_error("Tipo de punto inválido", "POST", "/api/puntos", {"id": "HOSP-1", "tipo": "hospital"}, 400, "dato_invalido")
+    expect_error("Identificador con espacios internos", "POST", "/api/puntos", {"id": "BAR NORTE", "tipo": "barrio"}, 400, "dato_invalido")
+    expect_error("Identificador vacío", "POST", "/api/puntos", {"id": "   ", "tipo": "barrio"}, 400, "dato_invalido")
+    expect_error("Punto sin tipo", "POST", "/api/puntos", {"id": "BAR-ESTE"}, 400, "formato_incorrecto")
+    expect_error("Conexión duplicada (aunque con otro costo)", "POST", "/api/conexiones",
+                 {"origen": "BOD-CENTRO", "destino": "BAR-NORTE", "costo": 20}, 409, "conexion_duplicada")
 
     base = {"origen": "BAR-SUR", "destino": "BAR-NORTE"}
-    esperar_error("Costo igual a 0", "POST", "/api/conexiones", {**base, "costo": 0}, 400, "dato_invalido")
-    esperar_error("Costo negativo", "POST", "/api/conexiones", {**base, "costo": -5}, 400, "dato_invalido")
-    esperar_error("Costo como texto", "POST", "/api/conexiones", {**base, "costo": "diez"}, 400, "dato_invalido")
-    esperar_error("Costo booleano", "POST", "/api/conexiones", {**base, "costo": True}, 400, "dato_invalido")
-    esperar_error("Conexión sin costo", "POST", "/api/conexiones", base, 400, "formato_incorrecto")
-    esperar_error("Lazo: un punto conectado consigo mismo", "POST", "/api/conexiones",
-                  {"origen": "BAR-SUR", "destino": "bar-sur", "costo": 3}, 400, "dato_invalido")
-    esperar_error("JSON mal formado", "POST", "/api/puntos", None, 400, "formato_incorrecto", crudo=b'{"id": "X", "tipo": ')
-    esperar_error("Cuerpo que no es un objeto", "POST", "/api/puntos", ["BOD-2", "bodega"], 400, "formato_incorrecto")
+    expect_error("Costo igual a 0", "POST", "/api/conexiones", {**base, "costo": 0}, 400, "dato_invalido")
+    expect_error("Costo negativo", "POST", "/api/conexiones", {**base, "costo": -5}, 400, "dato_invalido")
+    expect_error("Costo como texto", "POST", "/api/conexiones", {**base, "costo": "diez"}, 400, "dato_invalido")
+    expect_error("Costo booleano", "POST", "/api/conexiones", {**base, "costo": True}, 400, "dato_invalido")
+    expect_error("Conexión sin costo", "POST", "/api/conexiones", base, 400, "formato_incorrecto")
+    expect_error("Lazo: un punto conectado consigo mismo", "POST", "/api/conexiones",
+                 {"origen": "BAR-SUR", "destino": "bar-sur", "costo": 3}, 400, "dato_invalido")
+    expect_error("JSON mal formado", "POST", "/api/puntos", None, 400, "formato_incorrecto", raw=b'{"id": "X", "tipo": ')
+    expect_error("Cuerpo que no es un objeto", "POST", "/api/puntos", ["BOD-2", "bodega"], 400, "formato_incorrecto")
 
-    puntos, conexiones = resumen_red()
-    verificar("Los rechazos no modificaron la red", "4 puntos y 4 conexiones",
-              f"{puntos} puntos y {conexiones} conexiones", (puntos, conexiones) == (4, 4))
+    points, connections = network_summary()
+    check("Los rechazos no modificaron la red", "4 puntos y 4 conexiones",
+          f"{points} puntos y {connections} conexiones", (points, connections) == (4, 4))
 
 
-def escenarios_api_y_visualizacion():
-    seccion("API, visualización y datos de ejemplo")
-    esperar_error("Endpoint inexistente", "GET", "/api/rutas", None, 404, "ruta_no_encontrada")
-    esperar_error("Método no permitido", "PUT", "/api/puntos", {"id": "X", "tipo": "barrio"}, 405, "metodo_no_permitido")
+def api_and_visualization_scenarios():
+    section("API, visualización y datos de ejemplo")
+    expect_error("Endpoint inexistente", "GET", "/api/rutas", None, 404, "ruta_no_encontrada")
+    expect_error("Método no permitido", "PUT", "/api/puntos", {"id": "X", "tipo": "barrio"}, 405, "metodo_no_permitido")
 
-    estado, contenido, tipo = llamar("GET", "/api/red/imagen")
-    es_png = isinstance(contenido, bytes) and contenido.startswith(b"\x89PNG")
-    verificar("Imagen de la red dibujada con NetworkX", "200 image/png con firma PNG",
-              f"{estado} {tipo} con firma PNG={es_png}", estado == 200 and tipo == "image/png" and es_png)
+    status, content, content_type = call("GET", "/api/red/imagen")
+    is_png = isinstance(content, bytes) and content.startswith(b"\x89PNG")
+    check("Imagen de la red dibujada con NetworkX", "200 image/png con firma PNG",
+          f"{status} {content_type} con firma PNG={is_png}", status == 200 and content_type == "image/png" and is_png)
 
-    estado, cuerpo, _ = llamar("POST", "/api/red/ejemplo")
-    verificar("Cargar la red sintética de ejemplo", "201 con 7 puntos y 10 conexiones",
-              f"{estado} con {cuerpo['resumen']['puntos']} puntos y {cuerpo['resumen']['conexiones']} conexiones",
-              estado == 201 and (cuerpo["resumen"]["puntos"], cuerpo["resumen"]["conexiones"]) == (7, 10))
+    status, body, _ = call("POST", "/api/red/ejemplo")
+    check("Cargar la red sintética de ejemplo", "201 con 7 puntos y 10 conexiones",
+          f"{status} con {body['resumen']['puntos']} puntos y {body['resumen']['conexiones']} conexiones",
+          status == 201 and (body["resumen"]["puntos"], body["resumen"]["conexiones"]) == (7, 10))
 
-    estado, _, _ = llamar("DELETE", "/api/red")
-    puntos, conexiones = resumen_red()
-    verificar("Vaciar la red", "200 y luego 0 puntos, 0 conexiones",
-              f"{estado} y luego {puntos} puntos, {conexiones} conexiones", estado == 200 and (puntos, conexiones) == (0, 0))
+    status, _, _ = call("DELETE", "/api/red")
+    points, connections = network_summary()
+    check("Vaciar la red", "200 y luego 0 puntos, 0 conexiones",
+          f"{status} y luego {points} puntos, {connections} conexiones", status == 200 and (points, connections) == (0, 0))
 
 
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
-    print(f"Pruebas de aceptación · Feature 1 · RutaPyme\nAPI: {URL_BASE}")
+    print(f"Pruebas de aceptación · Feature 1 · RutaPyme\nAPI: {BASE_URL}")
     try:
-        llamar("GET", "/api/salud")
+        call("GET", "/api/salud")
     except urllib.error.URLError:
         print("\nNo se pudo conectar con la API. Inicie el servidor con: python main.py")
         sys.exit(2)
 
-    llamar("DELETE", "/api/red")  # punto de partida conocido
-    escenarios_red_vacia()
-    escenarios_normales()
-    escenarios_direccion()
-    escenarios_inexistentes()
-    escenarios_invalidos()
-    escenarios_api_y_visualizacion()
+    call("DELETE", "/api/red")  # known starting point
+    empty_network_scenarios()
+    normal_scenarios()
+    direction_scenarios()
+    nonexistent_scenarios()
+    invalid_scenarios()
+    api_and_visualization_scenarios()
 
-    aprobados = sum(resultados)
-    print(f"\nResultado: {aprobados}/{len(resultados)} escenarios aprobados.")
-    sys.exit(0 if aprobados == len(resultados) else 1)
+    passed = sum(results)
+    print(f"\nResultado: {passed}/{len(results)} escenarios aprobados.")
+    sys.exit(0 if passed == len(results) else 1)
 
 
 if __name__ == "__main__":
