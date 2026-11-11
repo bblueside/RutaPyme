@@ -1,0 +1,101 @@
+Pruebas de aceptación · Feature 2 · RutaPyme
+API: http://127.0.0.1:8021
+
+=== Red vacía ===
+[PASÓ] 01. Cobertura desde un origen con la red vacía
+        Esperado: 404 red_vacia
+        Obtenido: 404 red_vacia — «La red está vacía: registre puntos y conexiones (o cargue la red de ejemplo) antes de consultar la cobertura o una ruta.»
+[PASÓ] 02. Origen y destino con la red vacía
+        Esperado: 404 red_vacia
+        Obtenido: 404 red_vacia — «La red está vacía: registre puntos y conexiones (o cargue la red de ejemplo) antes de consultar la cobertura o una ruta.»
+
+=== Escenario normal de negocio: cobertura desde la bodega ===
+[PASÓ] 03. Destinos alcanzables desde BOD-CENTRO
+        Esperado: 200, 5 alcanzables ['BAR-NORTE', 'BAR-ORIENTE', 'BAR-SUR', 'PR-ESTACION', 'PR-PARQUE']
+        Obtenido: 200, 5 alcanzables ['BAR-NORTE', 'BAR-ORIENTE', 'BAR-SUR', 'PR-ESTACION', 'PR-PARQUE']
+[PASÓ] 04. Punto desconectado listado con su motivo
+        Esperado: PR-LAGUNA: no tiene trayectos de entrada
+        Obtenido: PR-LAGUNA: no tiene trayectos de entrada
+[PASÓ] 05. Orden de visita del recorrido por capas (BFS)
+        Esperado: BOD-CENTRO → BAR-NORTE → BAR-SUR → PR-ESTACION → PR-PARQUE → BAR-ORIENTE
+        Obtenido: BOD-CENTRO → BAR-NORTE → BAR-SUR → PR-ESTACION → PR-PARQUE → BAR-ORIENTE
+[PASÓ] 06. Capas: puntos agrupados por número de trayectos desde el origen
+        Esperado: [['BOD-CENTRO'], ['BAR-NORTE', 'BAR-SUR', 'PR-ESTACION'], ['PR-PARQUE', 'BAR-ORIENTE']]
+        Obtenido: [['BOD-CENTRO'], ['BAR-NORTE', 'BAR-SUR', 'PR-ESTACION'], ['PR-PARQUE', 'BAR-ORIENTE']]
+[PASÓ] 07. Traza: el primer paso visita el origen y descubre sus 3 salidas
+        Esperado: visita BOD-CENTRO, descubre ['BAR-NORTE', 'BAR-SUR', 'PR-ESTACION']
+        Obtenido: visita BOD-CENTRO, descubre ['BAR-NORTE', 'BAR-SUR', 'PR-ESTACION']
+[PASÓ] 08. Origen escrito en minúsculas se normaliza
+        Esperado: 200, origen BOD-CENTRO, 5 alcanzables
+        Obtenido: 200, origen BOD-CENTRO, 5 alcanzables
+
+=== Origen y destino: verificar cobertura ===
+[PASÓ] 09. Destino alcanzable con camino de evidencia
+        Esperado: 200, alcanzable, camino BOD-CENTRO → BAR-SUR → BAR-ORIENTE, 2 saltos
+        Obtenido: 200, alcanzable=True, camino BOD-CENTRO → BAR-SUR → BAR-ORIENTE, 2 saltos
+[PASÓ] 10. Cobertura no es ruta de menor costo (camino de 1 salto y 30 min, no el de 18 min)
+        Esperado: 200, camino BOD-CENTRO → PR-ESTACION y una nota que remite a la Feature 3
+        Obtenido: 200, camino BOD-CENTRO → PR-ESTACION, nota: «El camino es la evidencia de cobertura con menos trayectos (capas del BFS). No es necesariamente el de menor costo: eso es la Feature 3.»
+[PASÓ] 11. Origen igual al destino
+        Esperado: 200, alcanzable, 0 saltos
+        Obtenido: 200, alcanzable=True, 0 saltos
+
+=== Relación inexistente: destinos no alcanzables ===
+[PASÓ] 12. Destino desconectado (sin trayectos de entrada)
+        Esperado: 200, alcanzable=False y explicación sobre la falta de entradas
+        Obtenido: 200, alcanzable=False, «Ningún trayecto llega a PR-LAGUNA (no tiene conexiones de entrada): no se puede alcanzar desde ningún punto de la red.»
+[PASÓ] 13. Dirección: BAR-NORTE alcanza BAR-SUR, pero BAR-SUR no alcanza BAR-NORTE
+        Esperado: ida alcanzable=True, vuelta alcanzable=False explicando que a BAR-NORTE solo se llega desde BOD-CENTRO
+        Obtenido: ida alcanzable=True, vuelta alcanzable=False, «A BAR-NORTE solo llegan trayectos desde BOD-CENTRO, y ninguno de esos puntos es alcanzable desde BAR-SUR. Desde BAR-SUR solo se cubre: PR-ESTACION, BAR-ORIENTE. Recuerde que la red es dirigida: A→B no permite B→A.»
+[PASÓ] 14. Origen sin trayectos de salida
+        Esperado: 200, 0 alcanzables y mensaje 'no tiene trayectos de salida'
+        Obtenido: 200, 0 alcanzables, «PR-ESTACION no tiene trayectos de salida registrados: no puede cubrir ningún otro punto.»
+[PASÓ] 15. Verificar destino desde un origen sin salidas
+        Esperado: 200, alcanzable=False explicando que no tiene salidas
+        Obtenido: 200, alcanzable=False, «PR-ESTACION no tiene trayectos de salida registrados, así que no puede llegar a ningún punto.»
+
+=== Ciclos ===
+[PASÓ] 16. El ciclo BAR-SUR ⇄ BAR-ORIENTE no genera vueltas infinitas ni visitas repetidas
+        Esperado: 200, orden BAR-ORIENTE → BAR-SUR → PR-ESTACION sin repetidos
+        Obtenido: 200, orden BAR-ORIENTE → BAR-SUR → PR-ESTACION
+[PASÓ] 17. Ida y vuelta BOD-CENTRO ⇄ BAR-NORTE: el regreso al origen no se cuenta como destino
+        Esperado: 200, 5 alcanzables y BAR-NORTE no aparece entre ellos
+        Obtenido: 200, 5 alcanzables ['BOD-CENTRO', 'PR-PARQUE', 'BAR-SUR', 'PR-ESTACION', 'BAR-ORIENTE']
+
+=== Nodo inexistente y datos inválidos ===
+[PASÓ] 18. Origen inexistente
+        Esperado: 404 punto_inexistente
+        Obtenido: 404 punto_inexistente — «El punto de origen 'BOD-NORTE' no existe. Regístrelo primero.»
+[PASÓ] 19. Destino inexistente
+        Esperado: 404 punto_inexistente
+        Obtenido: 404 punto_inexistente — «El punto de destino 'BAR-OESTE' no existe. Regístrelo primero.»
+[PASÓ] 20. Origen con formato inválido (espacio interno)
+        Esperado: 400 dato_invalido
+        Obtenido: 400 dato_invalido — «El campo 'origen' debe tener de 1 a 30 caracteres: letras sin tilde, números, '-' o '_', sin espacios. Ejemplo: BOD-CENTRO.»
+[PASÓ] 21. Consulta sin origen
+        Esperado: 400 formato_incorrecto
+        Obtenido: 400 formato_incorrecto — «Indique el punto de origen en la ruta: /api/cobertura/{origen} o /api/cobertura/{origen}/{destino}.»
+[PASÓ] 22. Método no permitido en la cobertura
+        Esperado: 405 metodo_no_permitido
+        Obtenido: 405 metodo_no_permitido — «POST no está permitido en /api/cobertura/BOD-CENTRO. Use: GET.»
+[PASÓ] 23. Las consultas de cobertura no modificaron la red
+        Esperado: 7 puntos y 10 conexiones
+        Obtenido: 7 puntos y 10 conexiones
+
+=== Visualización del resultado ===
+[PASÓ] 24. Imagen de la cobertura dibujada con NetworkX a partir de nuestro BFS
+        Esperado: 200 con firma PNG
+        Obtenido: 200 con firma PNG=True
+[PASÓ] 25. Imagen de cobertura con origen inexistente
+        Esperado: 404 punto_inexistente
+        Obtenido: 404 punto_inexistente — «El punto de origen 'NO-EXISTE' no existe. Regístrelo primero.»
+
+=== Red con un solo punto y componente aislado ===
+[PASÓ] 26. Red con un solo punto
+        Esperado: 200, 0 alcanzables, 0 no alcanzables
+        Obtenido: 200, 0 alcanzables, 0 no alcanzables
+[PASÓ] 27. Destino en un componente aislado (BAR-A ⇄ BAR-B no se conecta con la bodega)
+        Esperado: 200, alcanzable=False explicando que a BAR-A solo se llega desde BAR-B
+        Obtenido: 200, alcanzable=False, «A BAR-A solo llegan trayectos desde BAR-B, y ninguno de esos puntos es alcanzable desde BOD-SOLA. Desde BOD-SOLA solo se cubre: PR-CERCA. Recuerde que la red es dirigida: A→B no permite B→A.»
+
+Resultado: 27/27 escenarios aprobados.
