@@ -110,7 +110,7 @@ revisa la cobertura y encuentra la mejor ruta en un solo lugar.»; botón primar
 |---------|-------|-------|
 | 01 Lugares en tu red | `resumen.puntos` | puntos conectados |
 | 02 Trayectos disponibles | `resumen.conexiones` | en un solo sentido |
-| 03 Cobertura desde **{origen}** | lugares alcanzables (incluido el origen) | de {total} lugares alcanzables |
+| 03 Cobertura desde **{origen}** | `total_alcanzables` de la API (no cuenta al origen) | de {total} lugares alcanzables (`total_alcanzables` + `total_no_alcanzables`) |
 
 Cifras en Inter Tight 700 con números tabulares. En móvil se apilan.
 
@@ -139,7 +139,7 @@ Cifras en Inter Tight 700 con números tabulares. En móvil se apilan.
 ### 7.5 Columna lateral
 
 1. **«Tu próxima entrega»** — «Una buena decisión empieza aquí.» Selectores **Punto de origen** y
-   **Destino** (nombre amigable + ID), botón ⇅ para intercambiar y botón primario **«Encontrar la
+   **Destino** (cada opción muestra «nombre · ID»; el destino no ofrece el origen), botón ⇅ para intercambiar y botón primario **«Encontrar la
    mejor ruta →»**. Sin consulta: ilustración «De la duda a la ruta.» con «✓ Menos tiempo ✓ Costo claro».
    Con resultado: ver §9.
 2. **«¿Hasta dónde puedes llegar?»** (fondo `#EAF0FD`) — «Desde **{origen}** puedes llegar a **N de M
@@ -234,13 +234,13 @@ obtener un resultado.
 | ID | Criterio |
 |----|----------|
 | CA-M01 | `/app` muestra header, encabezado, contadores, mapa, planificador, cobertura, tablas y pie con la composición de §7; `/app/points` redirige a `/app`. |
-| CA-M02 | Con la red de ejemplo, los contadores muestran 7 lugares, 10 trayectos y la cobertura del origen por defecto. |
+| CA-M02 | Con la red de ejemplo, los contadores muestran 7 lugares, 10 trayectos y «5 de 6 lugares alcanzables» desde Bodega Central (cifras de la API, que no cuenta al origen). |
 | CA-M03 | El origen por defecto es Bodega Central y el destino La Estación. |
 | CA-M04 | El mapa dibuja los 7 lugares y los 10 trayectos con su tiempo; BOD-CENTRO ↔ BAR-NORTE aparece como dos flechas separadas (12 y 15 min). |
 | CA-M05 | + / − cambian el zoom, el arrastre mueve el lienzo y recentrar restablece la vista. |
 | CA-M06 | Bodega Central → La Estación: 18 min, costo en COP según la tarifa de la API, 2 tramos por Barrio Sur, y comparación con el directo de 30 min (discontinuo en el mapa). |
 | CA-M07 | Bodega Central → La Laguna: «✕ No se puede llegar» con la `explicacion` de la API. |
-| CA-M08 | El modo Cobertura atenúa La Laguna y la tabla la marca «✕ Sin conexión»; el origen aparece como «Origen». |
+| CA-M08 | El modo Cobertura atenúa La Laguna con una «✕» y numera cada lugar con sus trayectos desde el origen; la tabla marca «✕ Sin conexión» y el origen aparece como «Origen». |
 | CA-M09 | «Agregar lugar» registra un lugar nuevo; aparece en mapa, tabla, selectores y contadores sin recargar la página. |
 | CA-M10 | «Agregar trayecto» con costo `0` o texto muestra el error 400 de la API en el formulario; con datos válidos aparece en el mapa y en «Trayectos». |
 | CA-M11 | Un lugar o trayecto duplicado muestra el error 409 de la API. |

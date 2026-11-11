@@ -24,65 +24,44 @@ python main.py --ejemplo        # terminal 1, API en http://127.0.0.1:8000 con l
 cd frontend && npm run dev      # terminal 2, panel en http://localhost:5173/app
 ```
 
-Se agrega `.claude/launch.json` (raíz) con las dos configuraciones (`api` y `panel`) para poder
-abrir la vista previa en el navegador integrado.
 
-## 3. Mapa de archivos
+## 3. Mapa de archivos (como quedó implementado)
 
 ### Nuevos
 
 | Archivo | Responsabilidad |
 |---------|-----------------|
-| `src/types/route.ts` | Tipos del contrato de `/api/ruta` (`RouteFound`, `RouteNotFound`, `RouteLeg`, `FewestHopsComparison`, `DijkstraStep`). |
-| `src/services/routeService.ts` | `getRoute(o, d)` y `routeImageUrl(o, d, version)`. |
+| `src/types/route.ts`, `src/services/routeService.ts` | Contrato de `/api/ruta` y su llamada (`getRoute`, `routeImageUrl`). |
 | `src/constants/pointNames.ts` | Diccionario de §6 y `displayName(id)`. |
-| `src/lib/formatCop.ts` | `Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 })`. |
-| `src/lib/networkLayout.ts` | Función pura: posiciones `{x, y}` por lugar a partir de `capas` y `no_alcanzables` de la API, y desplazamiento de aristas en ambos sentidos. No recorre el grafo. |
-| `src/hooks/useDeliverySelection.ts` | Origen, destino, valores por defecto (D-11), intercambio y modo del mapa. |
-| `src/hooks/useRouteQuery.ts` | Estado de la consulta de ruta (cargando, resultado, error) y su invalidación. |
-| `src/hooks/useMapViewport.ts` | Zoom (+/−), arrastre con *pointer events* y recentrar. |
-| `src/components/panel/page/NetworkPage.tsx` | Página única: compone todas las secciones. |
-| `src/components/panel/page/PageIntro.tsx` | Antetítulo, título, frase y «Agregar lugar». |
-| `src/components/panel/page/StatCards.tsx` | Los tres contadores. |
-| `src/components/panel/page/PanelFooter.tsx` | Pie de página. |
-| `src/components/panel/map/NetworkMapCard.tsx` | Tarjeta: título, «Agregar trayecto», selector de modo, lienzo, leyenda, enlace al PNG. |
-| `src/components/panel/map/NetworkMap.tsx` | SVG: nodos, aristas, etiquetas, resaltados por modo, estado vacío. |
-| `src/components/panel/map/MapNode.tsx`, `MapEdge.tsx`, `MapControls.tsx`, `MapLegend.tsx` | Piezas del lienzo. |
-| `src/components/panel/planner/DeliveryPlannerCard.tsx` | «Tu próxima entrega»: selectores, ⇅, botón, estado inicial. |
-| `src/components/panel/planner/RouteResult.tsx` | Veredicto, cifras, tramos, comparación, explicación. |
-| `src/components/panel/planner/DijkstraTrace.tsx` | Desplegable «Ver cómo se calculó». |
-| `src/components/panel/coverage/CoverageCard.tsx` | «¿Hasta dónde puedes llegar?». |
-| `src/components/panel/tables/NetworkTables.tsx` | Pestañas, buscador y pie. |
-| `src/components/panel/tables/PlacesTable.tsx`, `TripsTable.tsx` | Filas y versión apilada en móvil. |
-| `src/components/panel/dialogs/AddPointDialog.tsx`, `AddConnectionDialog.tsx` | Formularios en diálogo (reutilizan la lógica de `PointForm` y `ConnectionForm`). |
-| `src/components/panel/dialogs/PointDetailDialog.tsx` | Detalle del lugar con `GET /api/puntos/{id}` (reutiliza la lógica de `PointLookup`). |
-| `src/components/panel/dialogs/HelpDialog.tsx` | «Ayuda y cómo funciona». |
-| `src/components/panel/layout/DemoMenu.tsx` | «Modo de demostración»: cargar ejemplo y vaciar red. |
-| `.claude/launch.json` | Configuraciones `api` y `panel`. |
+| `src/lib/formatCop.ts` | Pesos (`$ 3.600`) y minutos con formato `es-CO`. |
+| `src/lib/networkLayout.ts` | Posiciones y trazos del mapa a partir de las `capas` de la API; las aristas entre lugares de la misma columna se curvan para no pisar los nombres. |
+| `src/hooks/useApiResource.ts` | Lectura de un recurso con clave (cobertura, veredicto, detalle); no muestra datos de otra clave. |
+| `src/hooks/useDeliverySelection.ts`, `useRouteQuery.ts`, `useElementWidth.ts` | Origen/destino/modo, consulta de ruta y medida del lienzo. |
+| `components/panel/layout/PanelHeader`, `DemoMenu` | Encabezado sin menú lateral y menú «Modo de demostración». |
+| `components/panel/page/` | `NetworkPage`, `PageIntro`, `StatCards`, `PanelFooter`. |
+| `components/panel/map/` | `NetworkMapCard`, `NetworkMap` (SVG, zoom por ancho con scroll nativo, arrastre), `MapControls`, `MapLegend`. |
+| `components/panel/planner/` | `DeliveryPlannerCard`, `RouteResult`, `RoutePath`, `DijkstraTrace`. |
+| `components/panel/coverage/` | `CoverageCard` y `BfsTrace`. |
+| `components/panel/tables/NetworkTables` | Pestañas, buscador y filas (apiladas en móvil). |
+| `components/panel/dialogs/` | `AddPointDialog`, `AddConnectionDialog`, `PointDetailDialog`, `HelpDialog`. |
+| `components/panel/shared/` | `Modal`, `LoadSampleDialog`, `ClearNetworkDialog`. |
 
-Cada componente nuevo con estilos lleva su `*.module.css`.
+Cada componente con estilos lleva su `*.module.css`.
 
 ### Se modifican
 
-| Archivo | Cambio |
-|---------|--------|
-| `index.html` | Agregar Manrope 800. |
-| `src/styles/panel-tokens.css` | Tokens del brief que falten: estados (texto/fondo), información `#EAF0FD`, lavanda, radios 14/8/6, alturas 36/40, sombra azulada. |
-| `src/styles/panel-shape.css`, `panel-controls.css` | Ajustes de tarjetas, botones, selectores, pestañas y chips al brief. |
-| `src/routes.ts`, `src/App.tsx` | `/app` → `NetworkPage`; `/app/*` → `<Navigate to="/app" replace />`. |
-| `src/components/header/HeaderLight.tsx` / `.css` | Variante del panel: pastilla única, ayuda y bloque de demostración; sin subnavegación. |
-| `src/components/panel/layout/PanelLayout.tsx` | Usa el header nuevo y renderiza `NetworkPage`. |
-| `src/hooks/useCoverageQuery.ts` | Que la cobertura siga al origen elegido (si hace falta). |
-| `src/components/panel/shared/TypeBadge`, `PathChips`, `ConfirmDialog`, `InlineError`, `ToastViewport`, `icons.tsx` | Se reutilizan; se agregan los iconos que faltan (caja, pin, objetivo, ruta, intercambio, ayuda, lupa, zoom). |
-| `src/components/panel/coverage/TraversalTrace.tsx`, `BfsLayers.tsx` | Se reutilizan dentro del desplegable de cobertura. |
+`index.html` (Manrope 800), `vite.config.ts` (variable opcional `API_TARGET`; sin ella el proxy sigue en el
+puerto 8000), `src/routes.ts` y `src/App.tsx` (`/app` es una página y `/app/*` redirige), tokens y
+controles de `src/styles/`, `PanelLayout`, `OfflineNotice`, `LoadSampleButton`, `TypeBadge` (chip con el
+color del tipo) e `icons.tsx` (iconos nuevos).
 
-### Se borran (si quedan sin importaciones; se confirma con `grep` antes de borrar)
+### Se borran (sin uso)
 
-`overview/*` (`OverviewView`, `NetworkSummary`, `AdjacencyList`, `UpdatedAgo`), `points/PointsView`,
-`points/PointLookup`, `coverage/CoverageView`, `CoverageForm`, `CoverageResult`, `StatTiles`,
-`ReachableList`, `UnreachableList`, `ReachabilityResult`, `shared/GraphImage`, `NetworkImageCard`,
-`CopyLinkChip`, `EndpointLabel`, `PointDatalist`, `layout/ViewHeader`, `PanelHeaderActions` y sus
-`*.module.css`. `LoadSampleButton` se conserva si `DemoMenu` y el estado vacío lo reutilizan.
+`components/header/HeaderLight.*`, `overview/*`, `points/*`, `connections/*`, las vistas y listas de
+`coverage/`, `shared/{Card, GraphImage, NetworkImageCard, CopyLinkChip, PointDatalist, GraphLegend, PathChips}`,
+`layout/{ViewHeader, PanelHeaderActions, HealthIndicator}` y `hooks/useCoverageQuery.ts`.
+`.claude/launch.json` (ignorado por git) ya existía; se le agregaron `api-test` y `frontend-test`
+para probar contra otro puerto sin tocar una API que el equipo tenga abierta.
 
 ## 4. Diseño del mapa
 

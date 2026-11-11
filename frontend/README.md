@@ -14,10 +14,8 @@ backend no necesita CORS.
 
 | Ruta | Vista |
 |------|-------|
-| `/app` | Resumen: contadores, lista de adyacencia e imagen de la red |
-| `/app/points` | Puntos: registrar, listar y consultar salidas |
-| `/app/connections` | Conexiones: registrar y listar trayectos |
-| `/app/coverage?from=&to=` | Cobertura de entregas y verificación origen → destino |
+| `/app` | «Mi red de entregas»: contadores, mapa, ruta más rápida con costo en COP, cobertura, lugares y trayectos |
+| `/app/*` | Cualquier otra subruta vuelve a `/app` (el panel es una sola página) |
 
 ## Comandos
 
