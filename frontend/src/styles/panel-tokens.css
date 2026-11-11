@@ -7,6 +7,7 @@
   --panel-accent: #0146C1;
   --panel-accent-soft: #E3E5FC;
   --panel-on-accent: #FFFFFF;
+  --panel-lavender: #B9C2F0;
 
   --panel-success: #15803D;
   --panel-success-bg: #E8F6EE;
@@ -28,4 +29,6 @@
   --panel-font-title: "Inter Tight", system-ui, sans-serif;
   --panel-font-text: "Manrope", system-ui, sans-serif;
   --panel-font-code: ui-monospace, "Cascadia Code", Consolas, monospace;
+  /* Cifras: números de ancho fijo para que las columnas queden alineadas. */
+  --panel-figures: 'tnum' 1;
 }

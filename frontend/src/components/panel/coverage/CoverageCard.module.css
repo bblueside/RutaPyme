@@ -1,0 +1,27 @@
+.card { display: flex; flex-direction: column; gap: var(--panel-space-3); padding: var(--panel-space-5); background: var(--panel-info-bg); border-color: var(--panel-info-line); }
+.title { display: flex; align-items: center; gap: 10px; margin: 0; font: 700 .98rem var(--panel-font-title); }
+.title svg { color: var(--panel-accent); }
+.text { margin: 0; font-size: .85rem; color: var(--panel-ink); }
+.bar { height: 8px; overflow: hidden; border-radius: 999px; background: #D3DEF7; }
+.bar span { display: block; height: 100%; border-radius: inherit; background: var(--panel-success); }
+.counts { display: flex; justify-content: space-between; gap: var(--panel-space-3); font-size: .74rem; color: var(--panel-ink-soft); }
+.counts span:first-child { display: inline-flex; align-items: center; gap: 6px; color: var(--panel-success); }
+.dot { width: 6px; height: 6px; border-radius: 50%; background: var(--panel-success); }
+.warning { display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 10px 12px; border: 1px solid var(--panel-warning-line); border-radius: var(--panel-radius-sm); background: var(--panel-warning-bg); color: #78350F; font-size: .8rem; line-height: 1.45; }
+.warning svg { flex: none; margin-top: 2px; color: var(--panel-warning); }
+.reason { display: block; font-size: .72rem; color: var(--panel-warning); }
+.more { margin: 0; font-size: .75rem; color: var(--panel-ink-soft); }
+.verdict { display: flex; flex-direction: column; gap: var(--panel-space-2); padding: var(--panel-space-3); border: 1px solid var(--panel-info-line); border-radius: var(--panel-radius-sm); background: var(--panel-surface); }
+.verdictTitle { display: flex; align-items: center; gap: 6px; margin: 0; font: 700 .8rem var(--panel-font-text); }
+.yes { color: var(--panel-success); }
+.no { color: var(--panel-error); }
+.note { display: flex; gap: 6px; margin: 0; font-size: .75rem; line-height: 1.5; color: var(--panel-ink-soft); overflow-wrap: anywhere; }
+.note svg { flex: none; margin-top: 3px; }
+.link {
+  display: flex; align-items: center; justify-content: space-between; margin-top: var(--panel-space-1); padding: var(--panel-space-3) 0 0;
+  border: 0; border-top: 1px solid var(--panel-info-line); background: transparent; color: var(--panel-accent);
+  font: 600 .82rem var(--panel-font-text); cursor: pointer;
+}
+.link:disabled { opacity: .5; cursor: not-allowed; }
+.link:hover:not(:disabled) { text-decoration: underline; }
+@media (max-width: 639px) { .card { padding: var(--panel-space-4); } }

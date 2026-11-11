@@ -1,0 +1,25 @@
+.result { display: flex; flex-direction: column; gap: var(--panel-space-3); margin-top: var(--panel-space-5); padding-top: var(--panel-space-4); border-top: 1px solid var(--panel-border); }
+.verdict { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start; margin: 0; padding: 5px 12px; border-radius: var(--panel-radius-xs); font: 700 .85rem var(--panel-font-text); }
+.ok { background: var(--panel-success-bg); color: var(--panel-success); }
+.no { background: var(--panel-error-bg); color: var(--panel-error); }
+.message { margin: 0; font-size: .84rem; line-height: 1.5; color: var(--panel-ink-soft); overflow-wrap: anywhere; }
+.explanation { margin: 0; padding: 10px 12px; border: 1px solid var(--panel-error-line); border-radius: var(--panel-radius-sm); background: var(--panel-error-bg); color: #7F1D1D; font-size: .84rem; line-height: 1.5; overflow-wrap: anywhere; }
+
+.figures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--panel-space-2); margin: 0; }
+.figures div { padding: 10px; border-radius: var(--panel-radius-sm); background: var(--panel-muted); }
+.figures dt { font-size: .7rem; color: var(--panel-ink-soft); }
+.figures dd { margin: 2px 0 0; font: 700 1.15rem var(--panel-font-title); font-feature-settings: var(--panel-figures); color: var(--panel-ink); }
+.figures small { font: 500 .7rem var(--panel-font-text); color: var(--panel-ink-soft); }
+.rate { margin: 0; font-size: .75rem; color: var(--panel-ink-soft); }
+
+.heading { margin: var(--panel-space-2) 0 0; font: 600 .82rem var(--panel-font-title); color: var(--panel-ink); }
+.legs { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: .8rem; }
+.legs li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px var(--panel-space-3); padding: 6px 0; border-bottom: 1px solid var(--panel-border); }
+.legName { font-weight: 600; }
+.legFigures { color: var(--panel-ink-soft); font-variant-numeric: tabular-nums; }
+
+.compare { display: flex; flex-direction: column; gap: var(--panel-space-2); padding: var(--panel-space-3); border: 1px solid var(--panel-info-line); border-radius: var(--panel-radius-sm); background: var(--panel-info-bg); }
+.compare .heading { margin-top: 0; }
+.compareFigures { margin: 0; font-size: .8rem; font-variant-numeric: tabular-nums; }
+.compareText { display: flex; gap: 6px; align-items: flex-start; margin: 0; font-size: .78rem; line-height: 1.5; color: #12307A; overflow-wrap: anywhere; }
+.compareText svg { flex: none; margin-top: 3px; }

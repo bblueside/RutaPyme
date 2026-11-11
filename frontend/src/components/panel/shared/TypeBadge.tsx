@@ -1,4 +1,4 @@
-// Tipo de punto: insignia rellena (variante "badge") o punto de color + etiqueta (variante "dot").
+// Tipo de lugar: chip con el color del tipo (variante "badge") o punto de color + etiqueta (variante "dot").
 import type { CSSProperties } from 'react'
 import { POINT_TYPE_COLOR, POINT_TYPE_LABEL } from '../../../constants/pointTypes'
 import type { PointType } from '../../../types/network'
@@ -19,10 +19,8 @@ function TypeBadge({ type, variant = 'badge' }: TypeBadgeProps) {
       </span>
     )
   }
-  // Blanco sobre #3BB273 no llega a contraste AA: el punto de recogida lleva texto oscuro.
-  const dark = type === 'punto_recogida' ? ` ${styles.dark}` : ''
   return (
-    <span className={`${styles.badge}${dark}`} style={style}>
+    <span className={styles.badge} style={style}>
       {POINT_TYPE_LABEL[type]}
     </span>
   )

@@ -1,0 +1,20 @@
+.page { min-width: 0; }
+
+/* Escritorio: columna principal (mapa y tablas) + columna lateral (planificador, cobertura y nota). */
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: var(--panel-gap); align-items: start; }
+.main, .side { display: flex; flex-direction: column; gap: var(--panel-gap); min-width: 0; }
+.note { display: flex; align-items: flex-start; gap: var(--panel-space-3); margin: 0; padding: 0 var(--panel-space-2); font-size: .78rem; line-height: 1.5; color: var(--panel-ink-soft); }
+.note svg { flex: none; margin-top: 1px; color: var(--panel-accent); }
+.note strong { color: var(--panel-ink); }
+
+/* Móvil: una columna con el orden de la especificación (planificador, mapa, cobertura, nota, tablas). */
+@media (max-width: 959px) {
+  .layout { display: flex; flex-direction: column; align-items: stretch; gap: var(--panel-gap); }
+  .planner, .map, .coverage, .note, .tables { min-width: 0; }
+  .main, .side { display: contents; }
+  .planner { order: 1; }
+  .map { order: 2; }
+  .coverage { order: 3; }
+  .note { order: 4; }
+  .tables { order: 5; }
+}

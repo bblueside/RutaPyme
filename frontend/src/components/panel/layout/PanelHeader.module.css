@@ -1,0 +1,43 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  background: var(--panel-surface);
+  border-bottom: 1px solid var(--panel-border);
+}
+.inner {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--panel-space-4);
+  width: min(100% - 32px, var(--panel-content-width));
+  min-height: 68px;
+  margin: 0 auto;
+}
+.brand { display: flex; align-items: center; text-decoration: none; }
+.logo { display: block; height: 34px; width: auto; }
+.pill {
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 0 16px; margin-left: var(--panel-space-2);
+  border-radius: 10px; background: var(--panel-accent-soft); color: var(--panel-accent);
+  font: 600 .92rem var(--panel-font-text); text-decoration: none;
+}
+.pillDot { width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--panel-accent); }
+.actions { display: flex; align-items: center; gap: var(--panel-space-4); margin-left: auto; }
+.help {
+  display: inline-flex; align-items: center; gap: 8px; min-height: var(--panel-control-height);
+  padding: 0 var(--panel-space-2); border: 0; border-radius: var(--panel-radius-sm);
+  background: transparent; color: var(--panel-accent); font: 500 .86rem var(--panel-font-text); cursor: pointer;
+}
+.help:hover { background: var(--panel-muted); }
+.header :focus-visible { outline: 2px solid var(--panel-accent); outline-offset: 2px; }
+
+@media (max-width: 639px) {
+  .inner { gap: var(--panel-space-2); min-height: 60px; }
+  .logo { height: 28px; }
+  .pill { padding: 0 10px; min-height: 40px; margin-left: 0; }
+  .pillLabel, .pillDot { display: none; }
+  .helpLabel { display: none; }
+  .help { width: 40px; min-height: 40px; justify-content: center; padding: 0; }
+  .actions { gap: var(--panel-space-1); }
+}

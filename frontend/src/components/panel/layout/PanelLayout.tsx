@@ -1,25 +1,17 @@
-// Estructura del panel: providers, encabezado, contenido de la vista activa y avisos.
+// Estructura del panel: providers, encabezado, la página única «Mi red de entregas» y avisos.
 import { Outlet } from 'react-router-dom'
-import HeaderLight, { type HeaderSection } from '../../header/HeaderLight'
 import { ApiHealthProvider } from '../../../context/ApiHealthProvider'
 import { NetworkProvider } from '../../../context/NetworkProvider'
 import { ToastProvider } from '../../../context/ToastProvider'
 import { useApiHealth } from '../../../hooks/useApiHealth'
 import { useNetwork } from '../../../hooks/useNetwork'
-import { PANEL_ROUTES } from '../../../routes'
 import ToastViewport from '../shared/ToastViewport'
 import OfflineNotice from './OfflineNotice'
-import PanelHeaderActions from './PanelHeaderActions'
+import PanelHeader from './PanelHeader'
 import '../../../styles/panel-tokens.css'
 import '../../../styles/panel-shape.css'
 import '../../../styles/panel-controls.css'
 import styles from './PanelLayout.module.css'
-
-const SECTIONS: HeaderSection[] = [
-  { id: 'overview', label: 'Resumen', to: PANEL_ROUTES.overview },
-  { id: 'points', label: 'Puntos y conexiones', to: PANEL_ROUTES.points },
-  { id: 'coverage', label: 'Cobertura', to: PANEL_ROUTES.coverage },
-]
 
 function PanelContent() {
   const { status, retry } = useApiHealth()
@@ -38,7 +30,7 @@ function PanelLayout() {
       <NetworkProvider>
         <ToastProvider>
           <div className={styles.page}>
-            <HeaderLight sections={SECTIONS} homeHref="/" actions={<PanelHeaderActions />} />
+            <PanelHeader />
             <main className={styles.content}>
               <PanelContent />
             </main>
