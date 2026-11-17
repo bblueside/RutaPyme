@@ -74,14 +74,14 @@ function CoverageBody({ coverage, points, origin, onOpenPoint, onShowOnMap }: Co
   return (
     <>
       <p className={styles.sentence}>
-        Desde <strong>{displayName(origin)}</strong> puedes llegar a <strong>{reachable} de {total} lugares</strong>.
+        Desde <strong>{displayName(origin)}</strong> puedes llegar a <strong>{reachable} de {total} {total === 1 ? 'lugar' : 'lugares'}</strong>.
       </p>
       <div>
         <div className={styles.bar} role="progressbar" aria-valuemin={0} aria-valuemax={total} aria-valuenow={reachable} aria-label="Lugares alcanzables">
           <span style={{ width: `${percent}%` }} />
         </div>
         <div className={styles.counts}>
-          <span><span className={styles.dot} aria-hidden="true" /> {reachable} alcanzables</span>
+          <span><span className={styles.dot} aria-hidden="true" /> {reachable} {reachable === 1 ? 'alcanzable' : 'alcanzables'}</span>
           <span>{unreachable} sin conexión</span>
         </div>
       </div>
