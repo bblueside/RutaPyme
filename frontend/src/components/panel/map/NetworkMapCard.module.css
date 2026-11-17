@@ -32,6 +32,7 @@
 }
 .imageLink { display: inline-flex; align-items: center; gap: 4px; color: var(--panel-accent); font-weight: 600; text-decoration: none; }
 .imageLink:hover { text-decoration: underline; }
+.hintLink { padding: 0; border: 0; background: none; color: var(--panel-accent); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
 .hint { margin: var(--panel-space-3) 0 0; padding: 8px 12px; border-radius: var(--panel-radius-sm); background: var(--panel-info-bg); color: #12307A; font-size: .82rem; }
 
 .empty {

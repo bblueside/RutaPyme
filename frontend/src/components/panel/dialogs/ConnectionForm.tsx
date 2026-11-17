@@ -69,7 +69,7 @@ function ConnectionForm({ defaultOrigin, defaultDestination, onDone, onCancel }:
       <div className="pn-field">
         <label className="pn-label" htmlFor={`${fieldId}-costo`}>Tiempo estimado (minutos)</label>
         <input id={`${fieldId}-costo`} className="pn-input" inputMode="decimal" value={cost} placeholder="Ej. 12" autoComplete="off"
-          autoFocus aria-invalid={invalid} aria-describedby={error ? errorId : undefined}
+          autoFocus data-autofocus aria-invalid={invalid} aria-describedby={error ? errorId : undefined}
           onChange={(event) => { setCost(event.target.value); clearError() }} />
       </div>
       <p className={styles.info}>

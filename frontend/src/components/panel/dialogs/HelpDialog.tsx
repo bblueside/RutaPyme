@@ -10,17 +10,18 @@ function HelpDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
         <dd>
           Un <strong>lugar</strong> es una bodega, un barrio o un punto de recogida. Un <strong>trayecto</strong> es un
           camino de un solo sentido entre dos lugares, con el tiempo estimado en minutos. Ir de A a B no significa poder
-          volver: cada dirección se registra por separado.
+          volver: cada dirección se registra por separado. Los consultas y los agregas en «Gestionar red».
         </dd>
         <dt>Cobertura</dt>
         <dd>
           Responde «¿hasta dónde puedo llegar desde este origen?». Se calcula con un recorrido por capas (BFS): primero
           los lugares a un trayecto, luego a dos, y así. Los que no aparecen no tienen forma de llegar desde el origen.
+          La ves en «Cobertura», y «Cómo se calculó» muestra el recorrido paso a paso.
         </dd>
         <dt>Ruta más rápida</dt>
         <dd>
           Se calcula con el algoritmo de Dijkstra y suma los minutos de cada tramo. Se compara con la ruta de menos
-          tramos para mostrar que menos saltos no siempre significa menos tiempo.
+          tramos para mostrar que menos saltos no siempre significa menos tiempo. La planeas en «Planear entrega».
         </dd>
         <dt>Costo en pesos</dt>
         <dd>

@@ -56,6 +56,7 @@ function PointForm({ onDone, onCancel }: PointFormProps) {
           placeholder="Ej. Barrio-Occidente"
           autoComplete="off"
           autoFocus
+          data-autofocus
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : `${fieldId}-hint`}
           onChange={(event) => {

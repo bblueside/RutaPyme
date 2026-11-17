@@ -49,7 +49,7 @@ function ConfirmDialog({
         </div>
       )}
       <div className="pn-actions pn-actions--end">
-        <button type="button" className="pn-btn pn-btn--secondary" autoFocus onClick={onCancel} disabled={pending}>
+        <button type="button" className="pn-btn pn-btn--secondary" autoFocus data-autofocus onClick={onCancel} disabled={pending}>
           Cancelar
         </button>
         <button

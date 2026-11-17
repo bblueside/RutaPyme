@@ -32,7 +32,12 @@ function Modal({ open, title, subtitle, onClose, size = 'md', icon, iconTone = '
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
+    if (open && !dialog.open) {
+      dialog.showModal()
+      // React llama a focus() al montar, pero con el <dialog> aún cerrado no surte efecto: al abrir, el foco
+      // va al elemento marcado con data-autofocus (campo del formulario, «Cancelar»...) y no a la X.
+      bodyRef.current?.querySelector<HTMLElement>('[data-autofocus]')?.focus()
+    }
     if (!open && dialog.open) dialog.close()
   }, [open])
 

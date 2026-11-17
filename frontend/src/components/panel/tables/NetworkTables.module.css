@@ -48,6 +48,7 @@
 @media (max-width: 639px) {
   .tabs { padding: 0 var(--panel-space-4); }
   .tools { flex-direction: column; align-items: stretch; }
+  .search { flex: none; }
   .tools :global(.pn-btn) { width: 100%; }
   .tools > span { display: block; }
   .table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
