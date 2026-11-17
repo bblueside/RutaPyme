@@ -1,9 +1,10 @@
 // "Ayuda y cómo funciona": textos fijos que explican la red, los algoritmos y la tarifa.
+import { HelpIcon } from '../shared/icons'
 import Modal from '../shared/Modal'
 
 function HelpDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
-    <Modal open={open} title="Ayuda y cómo funciona" subtitle="Lo esencial para leer tu red de entregas." onClose={onClose} size="lg">
+    <Modal open={open} title="Ayuda y cómo funciona." subtitle="Lo esencial para leer tu red de entregas." icon={<HelpIcon />} onClose={onClose} size="lg">
       <dl className="pn-help">
         <dt>Lugares y trayectos</dt>
         <dd>
