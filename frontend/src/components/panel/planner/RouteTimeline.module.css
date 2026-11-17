@@ -1,0 +1,11 @@
+.timeline { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.stop, .leg { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; align-items: center; column-gap: var(--panel-space-3); }
+.stop { min-height: 28px; font-size: .9rem; }
+.stop strong { overflow-wrap: anywhere; }
+.node { width: 9px; height: 9px; box-sizing: border-box; border: 2px solid var(--panel-accent); border-radius: 50%; background: var(--panel-surface); justify-self: center; }
+.when { font-size: .78rem; color: var(--panel-ink-soft); }
+.leg { position: relative; min-height: 32px; font-size: .78rem; color: var(--panel-ink-soft); }
+.leg::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 1px; background: var(--panel-input); }
+.leg > span:first-child { grid-column: 2; }
+.leg > span:last-child { text-align: right; }
+.figures { font-family: var(--panel-font-code); font-variant-numeric: tabular-nums; }

@@ -1,9 +1,9 @@
 // Página única «Mi red de entregas»: junta el mapa, el planificador de rutas, la cobertura y las tablas.
 // Aquí vive el estado compartido (origen, destino, modo del mapa) y las consultas a la API.
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useApiHealth } from '../../../hooks/useApiHealth'
 import { useApiResource } from '../../../hooks/useApiResource'
-import { useDeliverySelection } from '../../../hooks/useDeliverySelection'
+import { useDeliverySelection, type MapMode } from '../../../hooks/useDeliverySelection'
 import { useNetwork } from '../../../hooks/useNetwork'
 import { useRatePerMinute } from '../../../hooks/useRatePerMinute'
 import { useRouteQuery } from '../../../hooks/useRouteQuery'
@@ -14,7 +14,7 @@ import AddPointDialog from '../dialogs/AddPointDialog'
 import NetworkDetailsDialog from '../dialogs/NetworkDetailsDialog'
 import PointDetailDialog from '../dialogs/PointDetailDialog'
 import NetworkMapCard from '../map/NetworkMapCard'
-import DeliveryPlannerCard from '../planner/DeliveryPlannerCard'
+import DeliveryPlannerDialog from '../planner/DeliveryPlannerDialog'
 import NetworkTables from '../tables/NetworkTables'
 import { InfoIcon } from '../shared/icons'
 import PageIntro from './PageIntro'
@@ -22,7 +22,7 @@ import PanelFooter from './PanelFooter'
 import StatCards from './StatCards'
 import styles from './NetworkPage.module.css'
 
-type Dialog = { kind: 'point' } | { kind: 'connection' } | { kind: 'detail'; id: string } | { kind: 'network' } | null
+type Dialog = { kind: 'point' } | { kind: 'connection' } | { kind: 'detail'; id: string } | { kind: 'network' } | { kind: 'planner' } | null
 
 function NetworkPage() {
   const { status } = useApiHealth()
@@ -38,26 +38,35 @@ function NetworkPage() {
   )
   const routeQuery = useRouteQuery(origin, destination, version)
 
-  async function findRoute() {
-    const route = await routeQuery.find()
-    if (route) selection.setMode('route')
-  }
-
   const online = status === 'online'
   const ratePerMinute = useRatePerMinute(connections)
+  const mapRef = useRef<HTMLDivElement>(null)
+
+  // D-07: cierra el modal, pone el mapa en el modo pedido y desplaza la página hasta él.
+  function showOnMap(next: MapMode) {
+    selection.setMode(next)
+    setDialog(null)
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    requestAnimationFrame(() => mapRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' }))
+  }
 
   return (
     <div className={styles.page}>
       <PageIntro onAddPoint={() => setDialog({ kind: 'point' })} />
-      {/* TEMPORAL (T2): botón para probar «Gestionar red»; T5 lo reemplaza por el definitivo en el mapa. */}
-      <button type="button" className="pn-btn pn-btn--secondary" disabled={!online} onClick={() => setDialog({ kind: 'network' })}>
-        Gestionar red
-      </button>
+      {/* TEMPORAL (T2 y T3): botones para probar los modales; T5 los reemplaza por los definitivos. */}
+      <div className="pn-actions">
+        <button type="button" className="pn-btn pn-btn--secondary" disabled={!online} onClick={() => setDialog({ kind: 'network' })}>
+          Gestionar red
+        </button>
+        <button type="button" className="pn-btn pn-btn--primary" disabled={!online || points.length < 2} onClick={() => setDialog({ kind: 'planner' })}>
+          Planear entrega
+        </button>
+      </div>
       <StatCards network={network} coverage={origin ? (coverageResource.data ?? coverageResource.latest) : null} origin={origin} />
 
       <div className={styles.layout}>
         <div className={styles.main}>
-          <div className={styles.map}>
+          <div className={styles.map} ref={mapRef}>
             <NetworkMapCard
               status={status}
               points={points}
@@ -92,21 +101,6 @@ function NetworkPage() {
         </div>
 
         <div className={styles.side}>
-          <div className={styles.planner}>
-            <DeliveryPlannerCard
-              status={status}
-              points={points}
-              origin={origin}
-              destination={destination}
-              onOriginChange={selection.setOrigin}
-              onDestinationChange={selection.setDestination}
-              onSwap={selection.swap}
-              onFind={() => void findRoute()}
-              pending={routeQuery.pending}
-              error={routeQuery.error}
-              route={routeQuery.route}
-            />
-          </div>
           <div className={styles.coverage}>
             <CoverageCard
               origin={origin}
@@ -142,6 +136,22 @@ function NetworkPage() {
         destination={destination}
         coverage={coverageResource.data}
         online={online}
+      />
+      <DeliveryPlannerDialog
+        open={dialog?.kind === 'planner'}
+        onClose={() => setDialog(null)}
+        status={status}
+        points={points}
+        origin={origin}
+        destination={destination}
+        onOriginChange={selection.setOrigin}
+        onDestinationChange={selection.setDestination}
+        onSwap={selection.swap}
+        onFind={() => void routeQuery.find()}
+        pending={routeQuery.pending}
+        error={routeQuery.error}
+        route={routeQuery.route}
+        onShowOnMap={showOnMap}
       />
       <PointDetailDialog id={dialog?.kind === 'detail' ? dialog.id : null} onClose={() => setDialog(null)} />
     </div>

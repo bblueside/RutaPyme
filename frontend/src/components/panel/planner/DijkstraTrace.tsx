@@ -1,4 +1,4 @@
-// «Ver cómo se calculó»: traza de Dijkstra tal como la devuelve la API (en minutos, con identificadores).
+// «Cómo se calculó»: traza de Dijkstra tal como la devuelve la API (en minutos, con identificadores).
 import { useState } from 'react'
 import { formatMinutes } from '../../../lib/formatCop'
 import type { CheapestRoute } from '../../../types/route'
@@ -14,7 +14,7 @@ function DijkstraTrace({ route }: { route: CheapestRoute }) {
   return (
     <details className={styles.details}>
       <summary className={styles.summary}>
-        Ver cómo se calculó <ChevronDownIcon className={styles.chevron} width={16} height={16} />
+        Cómo se calculó <ChevronDownIcon className={styles.chevron} width={16} height={16} />
       </summary>
       <p className={styles.algorithm}>{route.algoritmo}</p>
       <ol className={styles.steps}>
