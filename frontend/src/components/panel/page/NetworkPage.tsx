@@ -7,8 +7,8 @@ import { useDeliverySelection, type MapMode } from '../../../hooks/useDeliverySe
 import { useNetwork } from '../../../hooks/useNetwork'
 import { useRatePerMinute } from '../../../hooks/useRatePerMinute'
 import { useRouteQuery } from '../../../hooks/useRouteQuery'
-import { checkReachability, getCoverage } from '../../../services/coverageService'
-import CoverageCard from '../coverage/CoverageCard'
+import { getCoverage } from '../../../services/coverageService'
+import CoverageDialog from '../coverage/CoverageDialog'
 import AddConnectionDialog from '../dialogs/AddConnectionDialog'
 import AddPointDialog from '../dialogs/AddPointDialog'
 import NetworkDetailsDialog from '../dialogs/NetworkDetailsDialog'
@@ -22,7 +22,7 @@ import PanelFooter from './PanelFooter'
 import StatCards from './StatCards'
 import styles from './NetworkPage.module.css'
 
-type Dialog = { kind: 'point' } | { kind: 'connection' } | { kind: 'detail'; id: string } | { kind: 'network' } | { kind: 'planner' } | null
+type Dialog = { kind: 'point' } | { kind: 'connection' } | { kind: 'detail'; id: string } | { kind: 'network' } | { kind: 'planner' } | { kind: 'coverage' } | null
 
 function NetworkPage() {
   const { status } = useApiHealth()
@@ -32,10 +32,6 @@ function NetworkPage() {
   const [dialog, setDialog] = useState<Dialog>(null)
 
   const coverageResource = useApiResource(origin ? `coverage|${origin}|${version}` : null, () => getCoverage(origin))
-  const reachabilityResource = useApiResource(
-    mode === 'coverage' && origin && destination ? `reach|${origin}|${destination}|${version}` : null,
-    () => checkReachability(origin, destination),
-  )
   const routeQuery = useRouteQuery(origin, destination, version)
 
   const online = status === 'online'
@@ -53,10 +49,13 @@ function NetworkPage() {
   return (
     <div className={styles.page}>
       <PageIntro onAddPoint={() => setDialog({ kind: 'point' })} />
-      {/* TEMPORAL (T2 y T3): botones para probar los modales; T5 los reemplaza por los definitivos. */}
+      {/* TEMPORAL (T2 a T4): botones para probar los modales; T5 los reemplaza por los definitivos. */}
       <div className="pn-actions">
         <button type="button" className="pn-btn pn-btn--secondary" disabled={!online} onClick={() => setDialog({ kind: 'network' })}>
           Gestionar red
+        </button>
+        <button type="button" className="pn-btn pn-btn--secondary" disabled={!online || points.length < 1} onClick={() => setDialog({ kind: 'coverage' })}>
+          Cobertura
         </button>
         <button type="button" className="pn-btn pn-btn--primary" disabled={!online || points.length < 2} onClick={() => setDialog({ kind: 'planner' })}>
           Planear entrega
@@ -79,7 +78,6 @@ function NetworkPage() {
               origin={origin}
               destination={destination}
               route={routeQuery.route}
-              reachability={reachabilityResource.data}
               onAddConnection={() => setDialog({ kind: 'connection' })}
               onAddPoint={() => setDialog({ kind: 'point' })}
             />
@@ -101,18 +99,6 @@ function NetworkPage() {
         </div>
 
         <div className={styles.side}>
-          <div className={styles.coverage}>
-            <CoverageCard
-              origin={origin}
-              destination={destination}
-              coverage={coverageResource.data}
-              loading={coverageResource.loading}
-              error={coverageResource.error}
-              mode={mode}
-              onShowCoverage={() => selection.setMode('coverage')}
-              reachability={reachabilityResource.data}
-            />
-          </div>
           <p className={styles.note}>
             <InfoIcon width={18} height={18} />
             <span><strong>Ir no siempre significa poder volver.</strong> Los trayectos tienen un solo sentido. Cada dirección se registra por separado.</span>
@@ -151,6 +137,17 @@ function NetworkPage() {
         pending={routeQuery.pending}
         error={routeQuery.error}
         route={routeQuery.route}
+        onShowOnMap={showOnMap}
+      />
+      <CoverageDialog
+        open={dialog?.kind === 'coverage'}
+        onClose={() => setDialog(null)}
+        points={points}
+        origin={origin}
+        onOriginChange={selection.setOrigin}
+        coverage={coverageResource.data}
+        loading={coverageResource.loading}
+        error={coverageResource.error}
         onShowOnMap={showOnMap}
       />
       <PointDetailDialog id={dialog?.kind === 'detail' ? dialog.id : null} onClose={() => setDialog(null)} />

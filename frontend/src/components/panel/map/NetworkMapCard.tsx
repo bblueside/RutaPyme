@@ -4,7 +4,7 @@ import type { MapMode } from '../../../hooks/useDeliverySelection'
 import { coverageImageUrl } from '../../../services/coverageService'
 import { networkImageUrl } from '../../../services/networkService'
 import { routeImageUrl } from '../../../services/routeService'
-import type { Coverage, Reachability } from '../../../types/coverage'
+import type { Coverage } from '../../../types/coverage'
 import type { Network, Point } from '../../../types/network'
 import type { CheapestRoute } from '../../../types/route'
 import { ImageIcon, NetworkIcon, PinIcon, PlusIcon, RouteIcon, TargetIcon } from '../shared/icons'
@@ -33,13 +33,12 @@ interface NetworkMapCardProps {
   origin: string
   destination: string
   route: CheapestRoute | null
-  reachability: Reachability | null
   onAddConnection: () => void
   onAddPoint: () => void
 }
 
 function NetworkMapCard(props: NetworkMapCardProps) {
-  const { status, points, network, coverage, version, loading, mode, onModeChange, origin, destination, route, reachability } = props
+  const { status, points, network, coverage, version, loading, mode, onModeChange, origin, destination, route } = props
 
   let primaryPath: string[] = []
   let secondaryPath: string[] = []
@@ -48,7 +47,6 @@ function NetworkMapCard(props: NetworkMapCardProps) {
     const fewest = route.comparacion_menos_saltos.camino
     if (fewest.join('>') !== route.camino.join('>')) secondaryPath = fewest
   }
-  if (mode === 'coverage' && reachability?.alcanzable) primaryPath = reachability.camino
 
   let imageUrl = networkImageUrl(version)
   if (mode === 'coverage' && origin) imageUrl = coverageImageUrl(origin, version)

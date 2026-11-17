@@ -1,4 +1,4 @@
-// «Ver cómo se calculó» de la cobertura: capas y traza del recorrido por anchura (BFS) que devuelve la API.
+// «Cómo se calculó» de la cobertura: capas y traza del recorrido por anchura (BFS) que devuelve la API.
 import { useState } from 'react'
 import type { Coverage } from '../../../types/coverage'
 import { ChevronDownIcon } from '../shared/icons'
@@ -13,7 +13,7 @@ function BfsTrace({ coverage }: { coverage: Coverage }) {
   return (
     <details className={styles.details}>
       <summary className={styles.summary}>
-        Ver cómo se calculó <ChevronDownIcon className={styles.chevron} width={16} height={16} />
+        Cómo se calculó <ChevronDownIcon className={styles.chevron} width={16} height={16} />
       </summary>
       <p className={styles.algorithm}>{coverage.algoritmo}</p>
       <ol className={styles.layers} aria-label="Capas del recorrido">
