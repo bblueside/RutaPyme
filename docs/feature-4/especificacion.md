@@ -63,7 +63,7 @@ no ofrezca. No cambia el estado de la URL.
 | D-16 | Se reutilizan los componentes: `DeliveryPlannerCard` → cuerpo de Planear entrega, `CoverageCard` → cuerpo de Cobertura, `NetworkTables` → cuerpo de Gestionar red. Los formularios se extraen como `PointForm` y `ConnectionForm`. Solo se borran los contenedores que queden sin uso. |
 | D-17 | Cobertura se recalcula sola al cambiar el origen (sin botón). Planear entrega solo calcula con «Encontrar la mejor ruta». Al cambiar el origen o el destino, el resultado anterior se oculta. |
 | D-18 | Aviso de cobertura: nombra los lugares fuera de cobertura unidos con «y» (con más de 3: «A, B y N lugares más…»). Si no hay ninguno, recuadro verde «Llegas a todos tus lugares.». |
-| D-19 | Tamaños: `sm` ≈ 460 px (formularios, detalle), `md` ≈ 540 px (Planear entrega, Cobertura), `lg` ≈ 780 px (Gestionar red). Altura máxima 90vh con desplazamiento interno. |
+| D-19 | Tamaños: `sm` ≈ 560 px (formularios, detalle), `md` ≈ 700 px (Planear entrega, Cobertura), `lg` ≈ 960 px (Gestionar red). Altura máxima 90vh con desplazamiento interno. |
 | D-20 | Abrir un modal no cambia la URL. |
 | D-21 | Cinco tareas en el orden del [`plan.md`](plan.md) §3. La recomposición de la página va al final. |
 | D-22 | Validación: `npm run build`, `npm run lint`, escenarios PASÓ/FALLÓ en el navegador (§8), capturas en `docs/feature-4/capturas/` comparadas con los bocetos, y la aceptación de la API sin cambios. |
