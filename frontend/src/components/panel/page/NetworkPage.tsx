@@ -5,11 +5,13 @@ import { useApiHealth } from '../../../hooks/useApiHealth'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { useDeliverySelection } from '../../../hooks/useDeliverySelection'
 import { useNetwork } from '../../../hooks/useNetwork'
+import { useRatePerMinute } from '../../../hooks/useRatePerMinute'
 import { useRouteQuery } from '../../../hooks/useRouteQuery'
 import { checkReachability, getCoverage } from '../../../services/coverageService'
 import CoverageCard from '../coverage/CoverageCard'
 import AddConnectionDialog from '../dialogs/AddConnectionDialog'
 import AddPointDialog from '../dialogs/AddPointDialog'
+import NetworkDetailsDialog from '../dialogs/NetworkDetailsDialog'
 import PointDetailDialog from '../dialogs/PointDetailDialog'
 import NetworkMapCard from '../map/NetworkMapCard'
 import DeliveryPlannerCard from '../planner/DeliveryPlannerCard'
@@ -20,7 +22,7 @@ import PanelFooter from './PanelFooter'
 import StatCards from './StatCards'
 import styles from './NetworkPage.module.css'
 
-type Dialog = { kind: 'point' } | { kind: 'connection' } | { kind: 'detail'; id: string } | null
+type Dialog = { kind: 'point' } | { kind: 'connection' } | { kind: 'detail'; id: string } | { kind: 'network' } | null
 
 function NetworkPage() {
   const { status } = useApiHealth()
@@ -42,10 +44,15 @@ function NetworkPage() {
   }
 
   const online = status === 'online'
+  const ratePerMinute = useRatePerMinute(connections)
 
   return (
     <div className={styles.page}>
       <PageIntro onAddPoint={() => setDialog({ kind: 'point' })} />
+      {/* TEMPORAL (T2): botón para probar «Gestionar red»; T5 lo reemplaza por el definitivo en el mapa. */}
+      <button type="button" className="pn-btn pn-btn--secondary" disabled={!online} onClick={() => setDialog({ kind: 'network' })}>
+        Gestionar red
+      </button>
       <StatCards network={network} coverage={origin ? (coverageResource.data ?? coverageResource.latest) : null} origin={origin} />
 
       <div className={styles.layout}>
@@ -76,8 +83,10 @@ function NetworkPage() {
               coverage={coverageResource.data}
               origin={origin}
               canEdit={online}
-              onOpenPoint={(id) => setDialog({ kind: 'detail', id })}
+              ratePerMinute={ratePerMinute}
+              onOpenPoint={(point) => setDialog({ kind: 'detail', id: point.id })}
               onAddPoint={() => setDialog({ kind: 'point' })}
+              onAddConnection={() => setDialog({ kind: 'connection' })}
             />
           </div>
         </div>
@@ -125,6 +134,14 @@ function NetworkPage() {
         defaultOrigin={origin}
         defaultDestination={destination}
         onClose={() => setDialog(null)}
+      />
+      <NetworkDetailsDialog
+        open={dialog?.kind === 'network'}
+        onClose={() => setDialog(null)}
+        origin={origin}
+        destination={destination}
+        coverage={coverageResource.data}
+        online={online}
       />
       <PointDetailDialog id={dialog?.kind === 'detail' ? dialog.id : null} onClose={() => setDialog(null)} />
     </div>
