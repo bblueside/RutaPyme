@@ -4,6 +4,7 @@
 > Rama base: `feature/4-frontend`. El núcleo y la API ya existen y **no se tocan**, así que el orden de
 > CLAUDE.md queda en **interfaz → validación → documentación**.
 > Decisiones de IA: [`docs/ia/bitacora-feature-4.md`](../ia/bitacora-feature-4.md).
+> Estado: **ejecutado el 2026-11-16** (T1 a T6). Validación en [`pruebas/prueba_manual_feature4.md`](../../pruebas/prueba_manual_feature4.md).
 
 ## 1. Punto de partida (verificado el 2026-11-16)
 

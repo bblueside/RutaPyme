@@ -14,7 +14,7 @@ backend no necesita CORS.
 
 | Ruta | Vista |
 |------|-------|
-| `/app` | «Mi red de entregas»: contadores, mapa, ruta más rápida con costo en COP, cobertura, lugares y trayectos |
+| `/app` | «Mi red de entregas»: contadores y mapa a todo el ancho; «Gestionar red» (lugares y trayectos), «Planear entrega» (ruta más rápida con costo en COP) y «Cobertura» se abren en ventanas modales |
 | `/app/*` | Cualquier otra subruta vuelve a `/app` (el panel es una sola página) |
 
 ## Comandos

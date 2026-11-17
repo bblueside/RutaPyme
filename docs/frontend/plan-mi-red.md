@@ -4,6 +4,8 @@
 > `feature/3-panel-mi-red` (sale de `feature/3-adicion-costo`, la única con `costo_monetario`).
 > Orden de CLAUDE.md: aquí el núcleo y la API ya existen, así que se va de **interfaz → validación →
 > documentación**. El backend no se toca.
+> **Reemplazado en parte por la Feature 4** ([`docs/feature-4/plan.md`](../feature-4/plan.md)): la recomposición de la página en modales
+> sustituye las tareas de composición de este plan. Se conserva como historia de la Feature 3.
 
 ## 1. Punto de partida (verificado el 2026-11-11)
 

@@ -3,7 +3,8 @@
 > Documento de entrada del desarrollo orientado a especificaciones (SDD) para recomponer el panel
 > React (`/app`) según los bocetos de [`bocetos/`](bocetos/). Primero se acuerda **qué** hace y
 > **cómo se ve**; después se escribe el código.
-> Estado: **en revisión** (pasa a «aprobada» cuando otro integrante la revise). Rama base: `feature/4-frontend`.
+> Estado: **implementada** (2026-11-16; la revisión de otro integrante se registra en cada PR). Rama base: `feature/4-frontend`.
+> Validación: [`pruebas/prueba_manual_feature4.md`](../../pruebas/prueba_manual_feature4.md) y capturas en [`capturas/`](capturas/).
 > Plan técnico: [`plan.md`](plan.md). Decisiones de IA: [`docs/ia/bitacora-feature-4.md`](../ia/bitacora-feature-4.md).
 > Reemplaza la composición de [`docs/frontend/especificacion-mi-red.md`](../frontend/especificacion-mi-red.md).
 

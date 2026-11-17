@@ -5,6 +5,9 @@
 > Estado: **aprobada**. Rama: `feature/3-panel-mi-red` (sale de `feature/3-adicion-costo`).
 > Plan técnico: [`plan-mi-red.md`](plan-mi-red.md). Decisiones de IA:
 > [`docs/ia/bitacora-frontend.md`](../ia/bitacora-frontend.md) (sección del 2026-11-11).
+> **Reemplazada en parte por la Feature 4** ([`docs/feature-4/especificacion.md`](../feature-4/especificacion.md)): la composición de la
+> página (planificador, cobertura y tablas en el cuerpo de `/app`) ahora vive en ventanas modales. Este documento se conserva como
+> historia de la Feature 3.
 
 ## 1. Valor
 
