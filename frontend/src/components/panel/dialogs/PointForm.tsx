@@ -1,4 +1,5 @@
-// Registrar un lugar (POST /api/puntos). Las reglas las valida la API; aquí solo se muestra su mensaje.
+// Formulario «Un nuevo lugar en tu red.» (POST /api/puntos). Las reglas las valida la API; aquí solo se muestra
+// su mensaje. Al guardar avisa con un toast, actualiza la red y llama a `onDone`.
 import { useEffect, useId, useState, type FormEvent } from 'react'
 import { POINT_TYPES, POINT_TYPE_LABEL } from '../../../constants/pointTypes'
 import { useApiHealth } from '../../../hooks/useApiHealth'
@@ -9,9 +10,13 @@ import { createPoint, getPointTypes } from '../../../services/pointService'
 import type { PointType } from '../../../types/network'
 import { InfoIcon, PlusIcon } from '../shared/icons'
 import InlineError from '../shared/InlineError'
-import Modal from '../shared/Modal'
 
-function PointForm({ onClose }: { onClose: () => void }) {
+interface PointFormProps {
+  onDone: () => void
+  onCancel: () => void
+}
+
+function PointForm({ onDone, onCancel }: PointFormProps) {
   const { status } = useApiHealth()
   const { refresh } = useNetwork()
   const { notify } = useToast()
@@ -19,6 +24,7 @@ function PointForm({ onClose }: { onClose: () => void }) {
   const [id, setId] = useState('')
   const [type, setType] = useState<PointType>('bodega')
   const [types, setTypes] = useState<PointType[]>(POINT_TYPES)
+  const [saved, setSaved] = useState(false)
   const fieldId = useId()
   const errorId = useId()
 
@@ -32,22 +38,25 @@ function PointForm({ onClose }: { onClose: () => void }) {
     event.preventDefault()
     const result = await run(id, type)
     if (!result) return
+    setSaved(true)
     notify(result.mensaje, 'success')
-    onClose()
     await refresh()
+    onDone()
   }
 
+  const busy = pending || saved
   return (
     <form className="pn-form" onSubmit={(event) => void handleSubmit(event)} noValidate>
       <div className="pn-field">
-        <label className="pn-label" htmlFor={`${fieldId}-id`}>Identificador</label>
+        <label className="pn-label" htmlFor={`${fieldId}-id`}>Nombre del lugar</label>
         <input
           id={`${fieldId}-id`}
-          className="pn-input pn-input--code"
+          className="pn-input"
           value={id}
-          placeholder="BOD-CENTRO"
+          placeholder="Ej. Barrio-Occidente"
           autoComplete="off"
           autoFocus
+          data-autofocus
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : `${fieldId}-hint`}
           onChange={(event) => {
@@ -67,21 +76,13 @@ function PointForm({ onClose }: { onClose: () => void }) {
       </div>
       <InlineError id={errorId} message={error?.message} />
       <div className="pn-actions pn-actions--end">
-        <button type="button" className="pn-btn pn-btn--secondary" onClick={onClose} disabled={pending}>Cancelar</button>
-        <button type="submit" className="pn-btn pn-btn--primary" disabled={pending || status !== 'online'}>
-          {pending ? 'Guardando…' : (<><PlusIcon />Registrar lugar</>)}
+        <button type="button" className="pn-btn pn-btn--secondary" onClick={onCancel} disabled={busy}>Cancelar</button>
+        <button type="submit" className="pn-btn pn-btn--primary" disabled={busy || status !== 'online'}>
+          {pending ? 'Guardando…' : (<><PlusIcon />Agregar lugar</>)}
         </button>
       </div>
     </form>
   )
 }
 
-function AddPointDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
-  return (
-    <Modal open={open} title="Agregar lugar" subtitle="Registra una bodega, un barrio o un punto de recogida." onClose={onClose}>
-      <PointForm onClose={onClose} />
-    </Modal>
-  )
-}
-
-export default AddPointDialog
+export default PointForm

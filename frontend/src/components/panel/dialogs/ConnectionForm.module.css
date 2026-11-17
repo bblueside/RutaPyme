@@ -1,0 +1,2 @@
+.info { display: flex; align-items: flex-start; gap: var(--panel-space-3); margin: 0; padding: var(--panel-space-3) var(--panel-space-4); border-radius: var(--panel-radius-sm); background: var(--panel-info-bg); color: #12307A; font-size: .8rem; line-height: 1.5; }
+.info svg { flex: none; margin-top: 1px; color: var(--panel-accent); }

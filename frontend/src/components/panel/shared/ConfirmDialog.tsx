@@ -1,7 +1,8 @@
-// Diálogo de confirmación accesible con <dialog>: se cierra con Esc y el foco empieza en "Cancelar".
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+// Diálogo de confirmación sobre Modal (misma cabecera que los demás): el foco empieza en "Cancelar".
+import type { ReactNode } from 'react'
 import EndpointLabel from './EndpointLabel'
 import { WarningIcon } from './icons'
+import Modal from './Modal'
 import styles from './ConfirmDialog.module.css'
 
 interface ConfirmDialogProps {
@@ -30,45 +31,25 @@ function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null)
-  const titleId = useId()
-
-  useEffect(() => {
-    const dialog = dialogRef.current
-    if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
-    if (!open && dialog.open) dialog.close()
-  }, [open])
-
   return (
-    <dialog
-      ref={dialogRef}
-      className={styles.dialog}
-      aria-labelledby={titleId}
-      onCancel={(event) => {
-        event.preventDefault()
+    <Modal
+      open={open}
+      title={title}
+      size="sm"
+      icon={<WarningIcon />}
+      iconTone={tone === 'danger' ? 'warning' : 'accent'}
+      onClose={() => {
         if (!pending) onCancel()
       }}
-      onClick={(event) => {
-        if (event.target === dialogRef.current && !pending) onCancel()
-      }}
     >
-      <div className={styles.body}>
-        <span className={styles.icon}>
-          <WarningIcon width={22} height={22} />
-        </span>
-        <h2 id={titleId} className={styles.title}>
-          {title}
-        </h2>
-        <div className={styles.text}>{children}</div>
-        {endpoint && (
-          <div className={styles.endpoint}>
-            <EndpointLabel method={endpoint.method} path={endpoint.path} />
-          </div>
-        )}
-      </div>
-      <div className={styles.footer}>
-        <button type="button" className="pn-btn pn-btn--secondary" autoFocus onClick={onCancel} disabled={pending}>
+      <div className={styles.text}>{children}</div>
+      {endpoint && (
+        <div className={styles.endpoint}>
+          <EndpointLabel method={endpoint.method} path={endpoint.path} />
+        </div>
+      )}
+      <div className="pn-actions pn-actions--end">
+        <button type="button" className="pn-btn pn-btn--secondary" autoFocus data-autofocus onClick={onCancel} disabled={pending}>
           Cancelar
         </button>
         <button
@@ -80,7 +61,7 @@ function ConfirmDialog({
           {pending ? 'Procesando…' : (<>{confirmIcon}{confirmLabel}</>)}
         </button>
       </div>
-    </dialog>
+    </Modal>
   )
 }
 

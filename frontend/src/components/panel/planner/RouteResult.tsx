@@ -1,70 +1,56 @@
-// Resultado de GET /api/ruta: veredicto, minutos, pesos, tramos, comparación y explicación si no hay ruta.
+// Resultado de GET /api/ruta: veredicto, tiempo y costo, camino tramo a tramo, comparación con la ruta de
+// menos tramos, tarifa de la API y la traza de Dijkstra («Cómo se calculó»). Sin ruta: el caso de §7.
 import { displayName } from '../../../constants/pointNames'
 import { formatCop, formatMinutes } from '../../../lib/formatCop'
 import type { CheapestRoute, RouteFound } from '../../../types/route'
-import { CheckCircleIcon, CrossCircleIcon, InfoIcon } from '../shared/icons'
+import { CheckCircleIcon, CrossCircleIcon } from '../shared/icons'
 import DijkstraTrace from './DijkstraTrace'
-import RoutePath from './RoutePath'
+import RouteTimeline from './RouteTimeline'
 import styles from './RouteResult.module.css'
 
 function FoundRoute({ route }: { route: RouteFound }) {
   const comparison = route.comparacion_menos_saltos
-  const samePath = comparison.camino.join('>') === route.camino.join('>')
-  const hops = (count: number) => `${count} ${count === 1 ? 'tramo' : 'tramos'}`
+  const sameTime = comparison.diferencia <= 0
+  const hops = comparison.saltos
 
   return (
     <>
-      <p className={`${styles.verdict} ${styles.ok}`}>
-        <CheckCircleIcon width={16} height={16} /> Sí se puede llegar
-      </p>
-      <p className={styles.message}>{route.mensaje}</p>
+      <div className={styles.verdictRow}>
+        <p className={`${styles.verdict} ${styles.ok}`}>
+          <CheckCircleIcon width={16} height={16} /> Sí, puedes llegar
+        </p>
+        <span className={styles.tag}>Ruta óptima</span>
+      </div>
 
       <dl className={styles.figures}>
         <div>
-          <dt>Tiempo</dt>
+          <dt>Tiempo total</dt>
           <dd>{formatMinutes(route.costo_total)}<small> min</small></dd>
         </div>
         <div>
-          <dt>Costo</dt>
+          <dt>Costo estimado</dt>
           <dd>{formatCop(route.costo_monetario.total)}</dd>
         </div>
-        <div>
-          <dt>Recorrido</dt>
-          <dd>{route.saltos}<small> {route.saltos === 1 ? 'tramo' : 'tramos'}</small></dd>
-        </div>
       </dl>
-      <p className={styles.rate}>Tarifa: {formatCop(route.costo_monetario.tarifa_por_minuto)} por minuto.</p>
 
-      <h3 className={styles.heading}>Ruta más rápida</h3>
-      <RoutePath path={route.camino} label="Ruta más rápida" />
-      {route.tramos.length > 0 && (
-        <ol className={styles.legs}>
-          {route.tramos.map((leg) => (
-            <li key={`${leg.origen}-${leg.destino}`}>
-              <span className={styles.legName}>{displayName(leg.origen)} → {displayName(leg.destino)}</span>
-              <span className={styles.legFigures}>{formatMinutes(leg.costo)} min · {formatCop(leg.costo_cop)}</span>
-            </li>
-          ))}
-        </ol>
+      <RouteTimeline route={route} />
+
+      {sameTime ? (
+        <p className={`${styles.compare} ${styles.same}`}>
+          <CheckCircleIcon width={14} height={14} /> La ruta de menos tramos también toma {formatMinutes(comparison.costo)} min.
+        </p>
+      ) : (
+        <p className={styles.compare}>
+          La ruta de menos tramos toma {formatMinutes(comparison.costo)} min:
+          {' '}<strong>{formatMinutes(comparison.diferencia)} min más · {formatCop(comparison.diferencia_cop)} más</strong>.
+        </p>
       )}
-
-      <div className={styles.compare}>
-        <h3 className={styles.heading}>Ruta de menos tramos</h3>
-        {samePath ? (
-          <p className={styles.compareText}><InfoIcon width={14} height={14} /> {comparison.mensaje}</p>
-        ) : (
-          <>
-            <RoutePath path={comparison.camino} label="Ruta de menos tramos" />
-            <p className={styles.compareFigures}>
-              {hops(comparison.saltos)} · {formatMinutes(comparison.costo)} min · {formatCop(comparison.costo_cop)}
-              {comparison.diferencia > 0 && (
-                <strong> (+{formatMinutes(comparison.diferencia)} min · +{formatCop(comparison.diferencia_cop)})</strong>
-              )}
-            </p>
-            <p className={styles.compareText}>{comparison.mensaje}</p>
-          </>
-        )}
+      <div className={styles.fewest}>
+        <span className={styles.fewestLabel}>Menos tramos · {hops}</span>
+        <strong>{comparison.camino.map(displayName).join(' → ')}</strong>
       </div>
+
+      <p className={styles.rate}>Tarifa de ejemplo: {formatCop(route.costo_monetario.tarifa_por_minuto)} por minuto.</p>
     </>
   )
 }
@@ -77,10 +63,11 @@ function RouteResult({ route }: { route: CheapestRoute }) {
       ) : (
         <>
           <p className={`${styles.verdict} ${styles.no}`}>
-            <CrossCircleIcon width={16} height={16} /> No se puede llegar
+            <CrossCircleIcon width={16} height={16} /> No hay forma de llegar
           </p>
-          <p className={styles.message}>{route.mensaje}</p>
-          <p className={styles.explanation}>{route.explicacion}</p>
+          <p className={styles.explanation}>
+            No existe un trayecto de {displayName(route.origen.id)} a {displayName(route.destino.id)}. Revisa tus trayectos en Gestionar red.
+          </p>
         </>
       )}
       <DijkstraTrace route={route} />

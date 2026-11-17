@@ -1,15 +1,14 @@
-// Detalle de un lugar (GET /api/puntos/{id}): tipo, identificador y trayectos de salida.
+// Detalle de un lugar (GET /api/puntos/{id}): tipo, identificador y trayectos de salida (D-29).
 import { displayName } from '../../../constants/pointNames'
 import { useApiResource } from '../../../hooks/useApiResource'
 import { useNetwork } from '../../../hooks/useNetwork'
 import { formatMinutes } from '../../../lib/formatCop'
 import { getPoint } from '../../../services/pointService'
 import InlineError from '../shared/InlineError'
-import Modal from '../shared/Modal'
 import TypeBadge from '../shared/TypeBadge'
-import styles from './PointDetailDialog.module.css'
+import styles from './PointDetailView.module.css'
 
-function PointDetail({ id }: { id: string }) {
+function PointDetailView({ id }: { id: string }) {
   const { version } = useNetwork()
   const { data, error, loading } = useApiResource(`point|${id}|${version}`, () => getPoint(id))
 
@@ -39,12 +38,4 @@ function PointDetail({ id }: { id: string }) {
   )
 }
 
-function PointDetailDialog({ id, onClose }: { id: string | null; onClose: () => void }) {
-  return (
-    <Modal open={id !== null} title={id ? displayName(id) : 'Lugar'} subtitle="Detalle del lugar en tu red." onClose={onClose}>
-      {id && <PointDetail id={id} />}
-    </Modal>
-  )
-}
-
-export default PointDetailDialog
+export default PointDetailView

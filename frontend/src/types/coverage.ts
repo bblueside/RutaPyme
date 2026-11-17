@@ -32,30 +32,3 @@ export interface Coverage {
   orden_visita: string[]
   traza: TraceStep[]
 }
-
-export interface ReachableRoute {
-  origen: Point
-  destino: Point
-  alcanzable: true
-  mensaje: string
-  saltos: number
-  camino: string[]
-  nota: string
-  orden_visita?: string[]
-  traza?: TraceStep[]
-}
-
-export interface UnreachableRoute {
-  origen: Point
-  destino: Point
-  alcanzable: false
-  mensaje: string
-  explicacion: string
-  alcanzables_desde_origen: string[]
-}
-
-export type Reachability = ReachableRoute | UnreachableRoute
-
-export function isReachability(result: Coverage | Reachability): result is Reachability {
-  return 'alcanzable' in result
-}

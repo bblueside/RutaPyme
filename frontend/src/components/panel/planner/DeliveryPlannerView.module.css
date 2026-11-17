@@ -1,0 +1,19 @@
+.form { display: flex; flex-direction: column; gap: var(--panel-space-4); }
+.fields { position: relative; display: flex; flex-direction: column; gap: var(--panel-space-4); }
+.label { align-items: center; gap: 6px; font-weight: 500; font-size: .8rem; color: var(--panel-ink-soft); }
+.originMark { width: 9px; height: 9px; border: 2px solid var(--panel-accent); border-radius: 50%; box-sizing: border-box; }
+/* El botón ⇅ queda a la derecha, a medio camino entre los dos campos. */
+.swap {
+  position: absolute; right: 8px; top: 50%; z-index: 1; transform: translateY(-50%);
+  display: grid; place-items: center; width: 34px; height: 34px;
+  border: 1px solid var(--panel-input); border-radius: var(--panel-radius-sm); background: var(--panel-surface);
+  color: var(--panel-accent); cursor: pointer; box-shadow: var(--panel-shadow);
+}
+.swap:hover:not(:disabled) { background: var(--panel-accent-soft); }
+.swap:disabled { opacity: .5; cursor: not-allowed; }
+.swap:focus-visible { outline: 2px solid var(--panel-accent); outline-offset: 2px; }
+.submit { justify-content: flex-start; width: 100%; }
+.onMap { justify-content: flex-start; width: 100%; color: var(--panel-accent); font-weight: 600; }
+.arrow { margin-left: auto; }
+
+.result { display: flex; flex-direction: column; gap: var(--panel-space-4); padding-top: var(--panel-space-4); border-top: 1px dashed var(--panel-input); }

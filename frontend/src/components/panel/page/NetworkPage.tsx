@@ -1,132 +1,114 @@
-// Página única «Mi red de entregas»: junta el mapa, el planificador de rutas, la cobertura y las tablas.
-// Aquí vive el estado compartido (origen, destino, modo del mapa) y las consultas a la API.
-import { useState } from 'react'
+// Página única «Mi red de entregas»: encabezado, contadores y el mapa a todo el ancho. Cada tarea (gestionar la
+// red, planear una entrega, revisar la cobertura) se abre en un modal. Aquí vive el estado compartido (origen,
+// destino, modo del mapa), las consultas a la API y cuál modal está abierto.
+import { useRef, useState } from 'react'
 import { useApiHealth } from '../../../hooks/useApiHealth'
 import { useApiResource } from '../../../hooks/useApiResource'
-import { useDeliverySelection } from '../../../hooks/useDeliverySelection'
+import { useDeliverySelection, type MapMode } from '../../../hooks/useDeliverySelection'
 import { useNetwork } from '../../../hooks/useNetwork'
 import { useRouteQuery } from '../../../hooks/useRouteQuery'
-import { checkReachability, getCoverage } from '../../../services/coverageService'
-import CoverageCard from '../coverage/CoverageCard'
-import AddConnectionDialog from '../dialogs/AddConnectionDialog'
-import AddPointDialog from '../dialogs/AddPointDialog'
-import PointDetailDialog from '../dialogs/PointDetailDialog'
+import { getCoverage } from '../../../services/coverageService'
+import CoverageDialog from '../coverage/CoverageDialog'
+import AddPointRootDialog from '../dialogs/AddPointRootDialog'
+import NetworkDetailsDialog from '../dialogs/NetworkDetailsDialog'
 import NetworkMapCard from '../map/NetworkMapCard'
-import DeliveryPlannerCard from '../planner/DeliveryPlannerCard'
-import NetworkTables from '../tables/NetworkTables'
-import { InfoIcon } from '../shared/icons'
+import DeliveryPlannerDialog from '../planner/DeliveryPlannerDialog'
 import PageIntro from './PageIntro'
 import PanelFooter from './PanelFooter'
 import StatCards from './StatCards'
 import styles from './NetworkPage.module.css'
 
-type Dialog = { kind: 'point' } | { kind: 'connection' } | { kind: 'detail'; id: string } | null
+type OpenDialog = 'network' | 'planner' | 'coverage' | 'add-point-root' | null
 
 function NetworkPage() {
   const { status } = useApiHealth()
-  const { points, connections, network, version, loading } = useNetwork()
+  const { points, network, version, loading } = useNetwork()
   const selection = useDeliverySelection(points, network)
   const { origin, destination, mode } = selection
-  const [dialog, setDialog] = useState<Dialog>(null)
+  const [openDialog, setOpenDialog] = useState<OpenDialog>(null)
+  const mapRef = useRef<HTMLDivElement>(null)
 
   const coverageResource = useApiResource(origin ? `coverage|${origin}|${version}` : null, () => getCoverage(origin))
-  const reachabilityResource = useApiResource(
-    mode === 'coverage' && origin && destination ? `reach|${origin}|${destination}|${version}` : null,
-    () => checkReachability(origin, destination),
-  )
   const routeQuery = useRouteQuery(origin, destination, version)
 
-  async function findRoute() {
-    const route = await routeQuery.find()
-    if (route) selection.setMode('route')
-  }
-
   const online = status === 'online'
+  const canCover = online && points.length >= 1
+  const canPlan = online && points.length >= 2
+  const close = () => setOpenDialog(null)
+
+  // D-07: cierra el modal, pone el mapa en el modo pedido y desplaza la página hasta él.
+  function showOnMap(next: MapMode) {
+    selection.setMode(next)
+    setOpenDialog(null)
+    const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    requestAnimationFrame(() => mapRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' }))
+  }
 
   return (
     <div className={styles.page}>
-      <PageIntro onAddPoint={() => setDialog({ kind: 'point' })} />
+      <PageIntro status={status} placeCount={points.length} onCoverage={() => setOpenDialog('coverage')} onPlanner={() => setOpenDialog('planner')} />
       <StatCards network={network} coverage={origin ? (coverageResource.data ?? coverageResource.latest) : null} origin={origin} />
 
-      <div className={styles.layout}>
-        <div className={styles.main}>
-          <div className={styles.map}>
-            <NetworkMapCard
-              status={status}
-              points={points}
-              network={network}
-              coverage={origin ? coverageResource.latest : null}
-              version={version}
-              loading={loading}
-              mode={mode}
-              onModeChange={selection.setMode}
-              origin={origin}
-              destination={destination}
-              route={routeQuery.route}
-              reachability={reachabilityResource.data}
-              onAddConnection={() => setDialog({ kind: 'connection' })}
-              onAddPoint={() => setDialog({ kind: 'point' })}
-            />
-          </div>
-          <div className={styles.tables}>
-            <NetworkTables
-              points={points}
-              connections={connections}
-              network={network}
-              coverage={coverageResource.data}
-              origin={origin}
-              canEdit={online}
-              onOpenPoint={(id) => setDialog({ kind: 'detail', id })}
-              onAddPoint={() => setDialog({ kind: 'point' })}
-            />
-          </div>
-        </div>
-
-        <div className={styles.side}>
-          <div className={styles.planner}>
-            <DeliveryPlannerCard
-              status={status}
-              points={points}
-              origin={origin}
-              destination={destination}
-              onOriginChange={selection.setOrigin}
-              onDestinationChange={selection.setDestination}
-              onSwap={selection.swap}
-              onFind={() => void findRoute()}
-              pending={routeQuery.pending}
-              error={routeQuery.error}
-              route={routeQuery.route}
-            />
-          </div>
-          <div className={styles.coverage}>
-            <CoverageCard
-              origin={origin}
-              destination={destination}
-              coverage={coverageResource.data}
-              loading={coverageResource.loading}
-              error={coverageResource.error}
-              mode={mode}
-              onShowCoverage={() => selection.setMode('coverage')}
-              reachability={reachabilityResource.data}
-            />
-          </div>
-          <p className={styles.note}>
-            <InfoIcon width={18} height={18} />
-            <span><strong>Ir no siempre significa poder volver.</strong> Los trayectos tienen un solo sentido. Cada dirección se registra por separado.</span>
-          </p>
-        </div>
+      <div className={styles.map} ref={mapRef}>
+        <NetworkMapCard
+          status={status}
+          points={points}
+          network={network}
+          coverage={origin ? coverageResource.latest : null}
+          version={version}
+          loading={loading}
+          mode={mode}
+          onModeChange={selection.setMode}
+          origin={origin}
+          destination={destination}
+          route={routeQuery.route}
+          onManage={() => setOpenDialog('network')}
+          onAddPoint={() => setOpenDialog('add-point-root')}
+          onOpenPlanner={() => setOpenDialog('planner')}
+          onOpenCoverage={() => setOpenDialog('coverage')}
+          canPlan={canPlan}
+          canCover={canCover}
+        />
       </div>
 
       <PanelFooter />
 
-      <AddPointDialog open={dialog?.kind === 'point'} onClose={() => setDialog(null)} />
-      <AddConnectionDialog
-        open={dialog?.kind === 'connection'}
-        defaultOrigin={origin}
-        defaultDestination={destination}
-        onClose={() => setDialog(null)}
+      <NetworkDetailsDialog
+        open={openDialog === 'network'}
+        onClose={close}
+        origin={origin}
+        destination={destination}
+        coverage={coverageResource.data}
+        online={online}
       />
-      <PointDetailDialog id={dialog?.kind === 'detail' ? dialog.id : null} onClose={() => setDialog(null)} />
+      <AddPointRootDialog open={openDialog === 'add-point-root'} onClose={close} />
+      <DeliveryPlannerDialog
+        open={openDialog === 'planner'}
+        onClose={close}
+        status={status}
+        points={points}
+        origin={origin}
+        destination={destination}
+        onOriginChange={selection.setOrigin}
+        onDestinationChange={selection.setDestination}
+        onSwap={selection.swap}
+        onFind={() => void routeQuery.find()}
+        pending={routeQuery.pending}
+        error={routeQuery.error}
+        route={routeQuery.route}
+        onShowOnMap={showOnMap}
+      />
+      <CoverageDialog
+        open={openDialog === 'coverage'}
+        onClose={close}
+        points={points}
+        origin={origin}
+        onOriginChange={selection.setOrigin}
+        coverage={coverageResource.data}
+        loading={coverageResource.loading}
+        error={coverageResource.error}
+        onShowOnMap={showOnMap}
+      />
     </div>
   )
 }

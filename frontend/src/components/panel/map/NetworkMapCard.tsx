@@ -1,10 +1,11 @@
 // Tarjeta «El mapa de tu operación»: modos del mapa, lienzo SVG, leyenda y enlace a la imagen que genera la API.
+import type { ReactNode } from 'react'
 import type { ApiStatus } from '../../../context/apiHealthContext'
 import type { MapMode } from '../../../hooks/useDeliverySelection'
 import { coverageImageUrl } from '../../../services/coverageService'
 import { networkImageUrl } from '../../../services/networkService'
 import { routeImageUrl } from '../../../services/routeService'
-import type { Coverage, Reachability } from '../../../types/coverage'
+import type { Coverage } from '../../../types/coverage'
 import type { Network, Point } from '../../../types/network'
 import type { CheapestRoute } from '../../../types/route'
 import { ImageIcon, NetworkIcon, PinIcon, PlusIcon, RouteIcon, TargetIcon } from '../shared/icons'
@@ -33,13 +34,24 @@ interface NetworkMapCardProps {
   origin: string
   destination: string
   route: CheapestRoute | null
-  reachability: Reachability | null
-  onAddConnection: () => void
+  /** Abre «Gestionar red». */
+  onManage: () => void
+  /** «Agregar lugar» del estado vacío: abre el formulario como vista raíz (D-15). */
   onAddPoint: () => void
+  /** Enlaces de las pistas: abren los modales; solo se ofrecen si el modal se puede usar (D-13, D-14). */
+  onOpenPlanner: () => void
+  onOpenCoverage: () => void
+  canPlan: boolean
+  canCover: boolean
+}
+
+function HintLink({ enabled, onClick, children }: { enabled: boolean; onClick: () => void; children: ReactNode }) {
+  if (!enabled) return <strong>{children}</strong>
+  return <button type="button" className={styles.hintLink} onClick={onClick}>{children}</button>
 }
 
 function NetworkMapCard(props: NetworkMapCardProps) {
-  const { status, points, network, coverage, version, loading, mode, onModeChange, origin, destination, route, reachability } = props
+  const { status, points, network, coverage, version, loading, mode, onModeChange, origin, destination, route } = props
 
   let primaryPath: string[] = []
   let secondaryPath: string[] = []
@@ -48,7 +60,6 @@ function NetworkMapCard(props: NetworkMapCardProps) {
     const fewest = route.comparacion_menos_saltos.camino
     if (fewest.join('>') !== route.camino.join('>')) secondaryPath = fewest
   }
-  if (mode === 'coverage' && reachability?.alcanzable) primaryPath = reachability.camino
 
   let imageUrl = networkImageUrl(version)
   if (mode === 'coverage' && origin) imageUrl = coverageImageUrl(origin, version)
@@ -65,11 +76,8 @@ function NetworkMapCard(props: NetworkMapCardProps) {
           <p className={styles.sub}>Cada conexión es una posibilidad de entrega.</p>
         </div>
         <div className={styles.actions}>
-          <button type="button" className="pn-btn pn-btn--secondary" disabled={status !== 'online'} onClick={props.onAddPoint}>
-            <PlusIcon /> Agregar lugar
-          </button>
-          <button type="button" className="pn-btn pn-btn--secondary" disabled={status !== 'online' || points.length < 2} onClick={props.onAddConnection}>
-            <PlusIcon /> Agregar trayecto
+          <button type="button" className="pn-btn pn-btn--secondary" onClick={props.onManage}>
+            <NetworkIcon /> Gestionar red
           </button>
         </div>
       </div>
@@ -127,7 +135,14 @@ function NetworkMapCard(props: NetworkMapCardProps) {
       </div>
 
       {mode === 'route' && !route && points.length > 0 && (
-        <p className={styles.hint} role="status">Elige origen y destino y pulsa «Encontrar la mejor ruta» para verla aquí.</p>
+        <p className={styles.hint} role="status">
+          Abre <HintLink enabled={props.canPlan} onClick={props.onOpenPlanner}>«Planear entrega»</HintLink> para ver aquí la mejor ruta.
+        </p>
+      )}
+      {mode === 'coverage' && !origin && points.length > 0 && (
+        <p className={styles.hint} role="status">
+          Abre <HintLink enabled={props.canCover} onClick={props.onOpenCoverage}>«Cobertura»</HintLink> para elegir un origen.
+        </p>
       )}
 
       <MapLegend mode={mode} showRoute={primaryPath.length > 0 && mode === 'route'} showFewest={secondaryPath.length > 0} />
